@@ -50,7 +50,7 @@ function AIPage() {
         ))}
       </div>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-5 space-y-3 pb-32">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
             <div
