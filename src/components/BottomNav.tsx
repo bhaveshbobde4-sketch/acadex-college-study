@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, BookOpen, Sparkles, Users, User } from "lucide-react";
 
 type NavItem = {
-  to: "/" | "/notes" | "/ai" | "/community" | "/profile";
+  to: "/" | "/notes" | "/ai" | "/exam-hub" | "/profile";
   label: string;
   icon: typeof Home;
   primary?: boolean;
@@ -12,7 +12,7 @@ const items: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/notes", label: "Notes", icon: BookOpen },
   { to: "/ai", label: "AI", icon: Sparkles, primary: true },
-  { to: "/community", label: "Community", icon: Users },
+  { to: "/exam-hub", label: "Exams", icon: Users },
   { to: "/profile", label: "Profile", icon: User },
 ];
 

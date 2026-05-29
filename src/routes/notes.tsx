@@ -1,7 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, Download, Bookmark, FileText, Filter } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Download, Bookmark, FileText, Filter, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
+import { fetchNotes, pdfPublicUrl, logDownload } from "@/lib/notes-api";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -16,24 +20,35 @@ export const Route = createFileRoute("/notes")({
 const branches = ["CSE", "ECE", "ME", "EE", "CE", "IT"];
 const semesters = ["Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7", "Sem 8"];
 
-const notes = [
-  { title: "Data Structures — Complete", subject: "DSA", size: "3.2 MB", dl: "15.2k", hot: true },
-  { title: "Operating Systems Handbook", subject: "OS", size: "5.1 MB", dl: "11.8k", hot: true },
-  { title: "DBMS Notes — Normalization", subject: "DBMS", size: "1.8 MB", dl: "9.4k" },
-  { title: "Computer Networks Quick Revision", subject: "CN", size: "2.4 MB", dl: "8.9k" },
-  { title: "Discrete Mathematics", subject: "MA", size: "4.0 MB", dl: "6.2k" },
-];
-
 function NotesPage() {
   const [branch, setBranch] = useState("CSE");
   const [sem, setSem] = useState("Sem 5");
+  const [search, setSearch] = useState("");
+  const { user } = useAuth();
+
+  const { data: notes, isLoading } = useQuery({
+    queryKey: ["notes", branch, sem, search],
+    queryFn: () => fetchNotes({ branch, semester: sem, search: search.trim() || undefined }),
+  });
+
+  const handleDownload = async (id: string, path: string, title: string) => {
+    try {
+      await logDownload(id, user?.id ?? null);
+      window.open(pdfPublicUrl(path), "_blank", "noopener");
+      toast.success(`Opening ${title}`);
+    } catch {
+      toast.error("Could not open file");
+    }
+  };
 
   return (
     <PageShell title="Notes" subtitle="Library">
       <div className="glass rounded-2xl flex items-center gap-2 px-3 py-2.5">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
-          placeholder="Search subjects, topics, authors…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search subjects, topics…"
           className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground"
         />
         <button className="text-muted-foreground" aria-label="Filters">
@@ -45,43 +60,78 @@ function NotesPage() {
       <Chips label="Semester" items={semesters} value={sem} onChange={setSem} />
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold text-muted-foreground mb-2">Most downloaded</h2>
-        <div className="space-y-3">
-          {notes.map((n) => (
-            <article key={n.title} className="glass rounded-2xl p-4 flex items-center gap-3 gradient-border">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 flex items-center justify-center">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold truncate">{n.title}</h3>
-                  {n.hot && (
-                    <span className="text-[10px] uppercase rounded-full px-2 py-0.5 bg-gradient-to-r from-violet-500/30 to-sky-500/30 border border-white/10">
-                      Hot
-                    </span>
-                  )}
+        <h2 className="text-sm font-semibold text-muted-foreground mb-2">
+          {search ? "Search results" : "Most downloaded"}
+        </h2>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : !notes || notes.length === 0 ? (
+          <EmptyState
+            title="No notes yet"
+            body={
+              user
+                ? `No notes for ${branch} · ${sem} yet. Be the first to upload one!`
+                : `Sign in to upload the first notes for ${branch} · ${sem}.`
+            }
+            cta={user ? null : <Link to="/login" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Sign in</Link>}
+          />
+        ) : (
+          <div className="space-y-3">
+            {notes.map((n) => (
+              <article key={n.id} className="glass rounded-2xl p-4 flex items-center gap-3 gradient-border">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5" />
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {n.subject} · {branch} · {sem} · {n.size} · {n.dl} downloads
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold truncate">{n.title}</h3>
+                    {n.is_hot && (
+                      <span className="text-[10px] uppercase rounded-full px-2 py-0.5 bg-gradient-to-r from-violet-500/30 to-sky-500/30 border border-white/10">
+                        Hot
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {n.subject} · {n.branch} · {n.semester}
+                    {n.file_size_kb ? ` · ${(n.file_size_kb / 1024).toFixed(1)} MB` : ""} · {n.downloads} ↓
+                  </div>
                 </div>
-              </div>
-              <button className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center" aria-label="Save">
-                <Bookmark className="h-4 w-4" />
-              </button>
-              <button className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center" aria-label="Download">
-                <Download className="h-4 w-4" />
-              </button>
-            </article>
-          ))}
-        </div>
+                <button
+                  className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0"
+                  aria-label="Save"
+                >
+                  <Bookmark className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDownload(n.id, n.pdf_path, n.title)}
+                  className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center shrink-0"
+                  aria-label="Download"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </PageShell>
   );
 }
 
 function Chips({
-  label, items, value, onChange,
-}: { label: string; items: string[]; value: string; onChange: (v: string) => void }) {
+  label,
+  items,
+  value,
+  onChange,
+}: {
+  label: string;
+  items: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="mt-5">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{label}</div>
@@ -103,6 +153,17 @@ function Chips({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function EmptyState({ title, body, cta }: { title: string; body: string; cta?: React.ReactNode }) {
+  return (
+    <div className="glass rounded-3xl p-8 text-center gradient-border">
+      <div className="text-2xl mb-1">📚</div>
+      <div className="text-sm font-semibold">{title}</div>
+      <p className="text-xs text-muted-foreground mt-1">{body}</p>
+      {cta}
     </div>
   );
 }

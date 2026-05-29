@@ -1,5 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Mail, Lock, GraduationCap } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Mail, Lock, GraduationCap, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -12,6 +17,56 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (user) navigate({ to: "/", replace: true });
+  }, [user, navigate]);
+
+  const handleEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: { full_name: name },
+          },
+        });
+        if (error) throw error;
+        toast.success("Account created — check your email to confirm.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Welcome back!");
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error(result.error.message || "Google sign-in failed");
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col px-6 py-10">
       <div className="flex items-center gap-2">
@@ -23,15 +78,22 @@ function LoginPage() {
 
       <div className="mt-12">
         <h1 className="text-3xl font-semibold leading-tight">
-          Welcome back to <span className="gradient-text">Acadex</span>
+          {mode === "signin" ? "Welcome back to" : "Join"}{" "}
+          <span className="gradient-text">Acadex</span>
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to access your notes, AI tutor and study streak.
+          {mode === "signin"
+            ? "Sign in to access your notes, AI tutor and study streak."
+            : "Create an account in seconds and start studying smarter."}
         </p>
       </div>
 
       <div className="mt-8 glass-strong rounded-3xl p-5 gradient-border">
-        <button className="w-full h-12 rounded-2xl bg-white text-black font-medium text-sm flex items-center justify-center gap-2">
+        <button
+          onClick={handleGoogle}
+          disabled={busy}
+          className="w-full h-12 rounded-2xl bg-white text-black font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+        >
           <GoogleIcon /> Continue with Google
         </button>
 
@@ -41,21 +103,54 @@ function LoginPage() {
           <div className="h-px flex-1 bg-white/10" />
         </div>
 
-        <Field icon={Mail} placeholder="you@college.edu" type="email" />
-        <div className="h-3" />
-        <Field icon={Lock} placeholder="Password" type="password" />
+        <form onSubmit={handleEmail} className="space-y-3">
+          {mode === "signup" && (
+            <Field
+              icon={GraduationCap}
+              placeholder="Full name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          )}
+          <Field
+            icon={Mail}
+            placeholder="you@college.edu"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Field
+            icon={Lock}
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
 
-        <Link to="/login" className="block text-right mt-2 text-xs text-muted-foreground">
-          Forgot password?
-        </Link>
-
-        <button className="mt-5 btn-brand w-full h-12 rounded-2xl text-sm font-semibold">
-          Sign in
-        </button>
+          <button
+            type="submit"
+            disabled={busy}
+            className="btn-brand w-full h-12 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {mode === "signin" ? "Sign in" : "Create account"}
+          </button>
+        </form>
       </div>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        New to Acadex? <Link to="/login" className="text-foreground underline-offset-4 underline">Create account</Link>
+        {mode === "signin" ? "New to Acadex?" : "Already have an account?"}{" "}
+        <button
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          className="text-foreground underline-offset-4 underline"
+        >
+          {mode === "signin" ? "Create account" : "Sign in"}
+        </button>
       </p>
 
       <Link to="/" className="mt-auto text-center text-xs text-muted-foreground">
@@ -65,7 +160,10 @@ function LoginPage() {
   );
 }
 
-function Field({ icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon: typeof Mail }) {
+function Field({
+  icon: Icon,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { icon: typeof Mail }) {
   return (
     <label className="flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 h-12">
       <Icon className="h-4 w-4 text-muted-foreground" />

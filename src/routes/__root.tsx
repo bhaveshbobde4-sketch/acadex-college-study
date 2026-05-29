@@ -9,10 +9,12 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNav } from "../components/BottomNav";
+import { AuthProvider } from "../hooks/use-auth";
 
 function NotFoundComponent() {
   return (
@@ -102,8 +104,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      {!hideChrome && <BottomNav />}
+      <AuthProvider>
+        <Outlet />
+        {!hideChrome && <BottomNav />}
+        <Toaster position="top-center" theme="dark" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Flame, BookOpen, FileText, Sparkles, Calendar, ChevronRight,
-  Timer, Calculator, GraduationCap, TrendingUp,
+  Timer, Calculator, TrendingUp, GraduationCap,
 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { fetchTrendingNotes, pdfPublicUrl } from "@/lib/notes-api";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,12 +18,6 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const trending = [
-  { title: "DSA — Trees & Graphs", subject: "CS", downloads: "12.4k", grad: "from-violet-500/30 to-fuchsia-500/20" },
-  { title: "Thermodynamics Cheatsheet", subject: "ME", downloads: "8.1k", grad: "from-sky-500/30 to-indigo-500/20" },
-  { title: "Signals & Systems", subject: "ECE", downloads: "6.7k", grad: "from-emerald-400/25 to-teal-500/20" },
-];
-
 const upcoming = [
   { name: "Operating Systems", date: "in 3 days", code: "CS304" },
   { name: "Engineering Maths III", date: "in 6 days", code: "MA301" },
@@ -29,9 +26,9 @@ const upcoming = [
 const quick = [
   { to: "/tools", label: "Pomodoro", icon: Timer },
   { to: "/tools", label: "CGPA", icon: Calculator },
-  { to: "/pyq", label: "PYQs", icon: FileText },
+  { to: "/exam-hub", label: "Exam Hub", icon: Calendar },
   { to: "/ai", label: "AI Tutor", icon: Sparkles },
-];
+] as const;
 
 function HomePage() {
   return (
@@ -100,24 +97,8 @@ function HomePage() {
       </section>
 
       {/* Trending notes */}
-      <section className="mt-7">
-        <SectionHeader title="Trending notes" to="/notes" />
-        <div className="mt-3 -mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2">
-          {trending.map((n) => (
-            <div key={n.title} className={`snap-start min-w-[72%] glass rounded-3xl p-4 bg-gradient-to-br ${n.grad}`}>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="rounded-full bg-white/10 px-2 py-0.5">{n.subject}</span>
-                <span>{n.downloads} ↓</span>
-              </div>
-              <div className="mt-6 text-base font-semibold leading-snug">{n.title}</div>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">PDF · 2.1 MB</span>
-                <button className="btn-brand text-xs font-medium rounded-xl px-3 py-1.5">Open</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <TrendingSection />
+
 
       {/* Upcoming exams */}
       <section className="mt-7">
@@ -149,5 +130,51 @@ function SectionHeader({ title, to }: { title: string; to: string }) {
         See all <ChevronRight className="h-3 w-3" />
       </Link>
     </div>
+  );
+}
+
+function TrendingSection() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["trending-notes"],
+    queryFn: () => fetchTrendingNotes(6),
+  });
+  const grads = [
+    "from-violet-500/30 to-fuchsia-500/20",
+    "from-sky-500/30 to-indigo-500/20",
+    "from-emerald-400/25 to-teal-500/20",
+  ];
+  return (
+    <section className="mt-7">
+      <SectionHeader title="Trending notes" to="/notes" />
+      <div className="mt-3 -mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2">
+        {isLoading ? (
+          <div className="min-w-[72%] glass rounded-3xl p-4 h-36 animate-pulse" />
+        ) : !data || data.length === 0 ? (
+          <div className="min-w-full glass rounded-3xl p-6 text-center text-xs text-muted-foreground">
+            No notes yet — be the first to upload!
+          </div>
+        ) : (
+          data.map((n, i) => (
+            <Link
+              key={n.id}
+              to="/notes"
+              className={`snap-start min-w-[72%] glass rounded-3xl p-4 bg-gradient-to-br ${grads[i % grads.length]}`}
+            >
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="rounded-full bg-white/10 px-2 py-0.5">{n.subject}</span>
+                <span>{n.downloads} ↓</span>
+              </div>
+              <div className="mt-6 text-base font-semibold leading-snug line-clamp-2">{n.title}</div>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {n.branch} · {n.semester}
+                </span>
+                <span className="btn-brand text-xs font-medium rounded-xl px-3 py-1.5">Open</span>
+              </div>
+            </Link>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
