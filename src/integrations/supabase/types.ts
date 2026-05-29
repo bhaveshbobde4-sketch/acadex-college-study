@@ -14,7 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exam_events: {
+        Row: {
+          branch: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string | null
+          id: string
+          link: string | null
+          semester: string | null
+          title: string
+          type: Database["public"]["Enums"]["exam_event_type"]
+        }
+        Insert: {
+          branch?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          link?: string | null
+          semester?: string | null
+          title: string
+          type: Database["public"]["Enums"]["exam_event_type"]
+        }
+        Update: {
+          branch?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          link?: string | null
+          semester?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["exam_event_type"]
+        }
+        Relationships: []
+      }
+      note_downloads: {
+        Row: {
+          downloaded_at: string
+          id: string
+          note_id: string
+          user_id: string | null
+        }
+        Insert: {
+          downloaded_at?: string
+          id?: string
+          note_id: string
+          user_id?: string | null
+        }
+        Update: {
+          downloaded_at?: string
+          id?: string
+          note_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_downloads_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          branch: string
+          created_at: string
+          description: string | null
+          downloads: number
+          file_size_kb: number | null
+          id: string
+          is_hot: boolean
+          pdf_path: string
+          semester: string
+          subject: string
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          branch: string
+          created_at?: string
+          description?: string | null
+          downloads?: number
+          file_size_kb?: number | null
+          id?: string
+          is_hot?: boolean
+          pdf_path: string
+          semester: string
+          subject: string
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          description?: string | null
+          downloads?: number
+          file_size_kb?: number | null
+          id?: string
+          is_hot?: boolean
+          pdf_path?: string
+          semester?: string
+          subject?: string
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          branch: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          semester: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          branch?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          semester?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          branch?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          semester?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +165,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      exam_event_type: "timetable" | "notice" | "important_date" | "result"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +292,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      exam_event_type: ["timetable", "notice", "important_date", "result"],
+    },
   },
 } as const
