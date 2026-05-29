@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Download, Bookmark, FileText, Filter, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, Download, Bookmark, FileText, Filter, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
-import { fetchNotes, pdfPublicUrl, logDownload } from "@/lib/notes-api";
+import { fetchNotes, logDownload, pdfPublicUrl, fetchMySavedIds, toggleSave } from "@/lib/notes-api";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/notes")({
@@ -25,10 +25,22 @@ function NotesPage() {
   const [sem, setSem] = useState("Sem 5");
   const [search, setSearch] = useState("");
   const { user } = useAuth();
+  const qc = useQueryClient();
 
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes", branch, sem, search],
     queryFn: () => fetchNotes({ branch, semester: sem, search: search.trim() || undefined }),
+  });
+  const { data: savedIds } = useQuery({
+    queryKey: ["saved-ids", user?.id ?? "anon"],
+    queryFn: fetchMySavedIds,
+    enabled: !!user,
+  });
+
+  const saveMut = useMutation({
+    mutationFn: ({ id, saved }: { id: string; saved: boolean }) => toggleSave(id, saved),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-ids"] }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const handleDownload = async (id: string, path: string, title: string) => {
@@ -42,7 +54,15 @@ function NotesPage() {
   };
 
   return (
-    <PageShell title="Notes" subtitle="Library">
+    <PageShell
+      title="Notes"
+      subtitle="Library"
+      right={
+        <Link to="/notes/upload" aria-label="Upload" className="btn-brand h-9 w-9 rounded-full flex items-center justify-center">
+          <Plus className="h-4 w-4" />
+        </Link>
+      }
+    >
       <div className="glass rounded-2xl flex items-center gap-2 px-3 py-2.5">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
@@ -76,44 +96,60 @@ function NotesPage() {
                 ? `No notes for ${branch} · ${sem} yet. Be the first to upload one!`
                 : `Sign in to upload the first notes for ${branch} · ${sem}.`
             }
-            cta={user ? null : <Link to="/login" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Sign in</Link>}
+            cta={
+              user ? (
+                <Link to="/notes/upload" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Upload notes</Link>
+              ) : (
+                <Link to="/login" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Sign in</Link>
+              )
+            }
           />
         ) : (
           <div className="space-y-3">
-            {notes.map((n) => (
-              <article key={n.id} className="glass rounded-2xl p-4 flex items-center gap-3 gradient-border">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 flex items-center justify-center shrink-0">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold truncate">{n.title}</h3>
-                    {n.is_hot && (
-                      <span className="text-[10px] uppercase rounded-full px-2 py-0.5 bg-gradient-to-r from-violet-500/30 to-sky-500/30 border border-white/10">
-                        Hot
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                    {n.subject} · {n.branch} · {n.semester}
-                    {n.file_size_kb ? ` · ${(n.file_size_kb / 1024).toFixed(1)} MB` : ""} · {n.downloads} ↓
-                  </div>
-                </div>
-                <button
-                  className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0"
-                  aria-label="Save"
-                >
-                  <Bookmark className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleDownload(n.id, n.pdf_path, n.title)}
-                  className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center shrink-0"
-                  aria-label="Download"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-              </article>
-            ))}
+            {notes.map((n) => {
+              const saved = savedIds?.has(n.id) ?? false;
+              return (
+                <article key={n.id} className="glass rounded-2xl p-4 flex items-center gap-3 gradient-border">
+                  <Link
+                    to="/notes/$id"
+                    params={{ id: n.id }}
+                    className="flex-1 flex items-center gap-3 min-w-0"
+                  >
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 flex items-center justify-center shrink-0">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-semibold truncate">{n.title}</h3>
+                        {n.is_hot && (
+                          <span className="text-[10px] uppercase rounded-full px-2 py-0.5 bg-gradient-to-r from-violet-500/30 to-sky-500/30 border border-white/10">
+                            Hot
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {n.subject} · {n.branch} · {n.semester}
+                        {n.file_size_kb ? ` · ${(n.file_size_kb / 1024).toFixed(1)} MB` : ""} · {n.downloads} ↓
+                      </div>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => user ? saveMut.mutate({ id: n.id, saved }) : toast.error("Sign in to save")}
+                    className={`h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 ${saved ? "btn-brand border-transparent" : "bg-white/5 border-white/10"}`}
+                    aria-label="Save"
+                  >
+                    <Bookmark className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
+                  </button>
+                  <button
+                    onClick={() => handleDownload(n.id, n.pdf_path, n.title)}
+                    className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center shrink-0"
+                    aria-label="Download"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -121,17 +157,7 @@ function NotesPage() {
   );
 }
 
-function Chips({
-  label,
-  items,
-  value,
-  onChange,
-}: {
-  label: string;
-  items: string[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function Chips({ label, items, value, onChange }: { label: string; items: string[]; value: string; onChange: (v: string) => void; }) {
   return (
     <div className="mt-5">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{label}</div>
@@ -143,9 +169,7 @@ function Chips({
               key={i}
               onClick={() => onChange(i)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all ${
-                active
-                  ? "btn-brand border-transparent"
-                  : "bg-white/5 border-white/10 text-muted-foreground hover:text-foreground"
+                active ? "btn-brand border-transparent" : "bg-white/5 border-white/10 text-muted-foreground hover:text-foreground"
               }`}
             >
               {i}
