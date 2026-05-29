@@ -104,8 +104,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      {!hideChrome && <BottomNav />}
+      <AuthProvider>
+        <Outlet />
+        {!hideChrome && <BottomNav />}
+        <Toaster position="top-center" theme="dark" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
