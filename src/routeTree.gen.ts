@@ -18,6 +18,8 @@ import { Route as ExamHubRouteImport } from './routes/exam-hub'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NotesUploadRouteImport } from './routes/notes.upload'
+import { Route as NotesIdRouteImport } from './routes/notes.$id'
 
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
@@ -64,6 +66,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotesUploadRoute = NotesUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => NotesRoute,
+} as any)
+const NotesIdRoute = NotesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => NotesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,10 +83,12 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/exam-hub': typeof ExamHubRoute
   '/login': typeof LoginRoute
-  '/notes': typeof NotesRoute
+  '/notes': typeof NotesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/pyq': typeof PyqRoute
   '/tools': typeof ToolsRoute
+  '/notes/$id': typeof NotesIdRoute
+  '/notes/upload': typeof NotesUploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,10 +96,12 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/exam-hub': typeof ExamHubRoute
   '/login': typeof LoginRoute
-  '/notes': typeof NotesRoute
+  '/notes': typeof NotesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/pyq': typeof PyqRoute
   '/tools': typeof ToolsRoute
+  '/notes/$id': typeof NotesIdRoute
+  '/notes/upload': typeof NotesUploadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,10 +110,12 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/exam-hub': typeof ExamHubRoute
   '/login': typeof LoginRoute
-  '/notes': typeof NotesRoute
+  '/notes': typeof NotesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/pyq': typeof PyqRoute
   '/tools': typeof ToolsRoute
+  '/notes/$id': typeof NotesIdRoute
+  '/notes/upload': typeof NotesUploadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +129,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/pyq'
     | '/tools'
+    | '/notes/$id'
+    | '/notes/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +142,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/pyq'
     | '/tools'
+    | '/notes/$id'
+    | '/notes/upload'
   id:
     | '__root__'
     | '/'
@@ -133,6 +155,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/pyq'
     | '/tools'
+    | '/notes/$id'
+    | '/notes/upload'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -141,7 +165,7 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   ExamHubRoute: typeof ExamHubRoute
   LoginRoute: typeof LoginRoute
-  NotesRoute: typeof NotesRoute
+  NotesRoute: typeof NotesRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   PyqRoute: typeof PyqRoute
   ToolsRoute: typeof ToolsRoute
@@ -212,8 +236,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notes/upload': {
+      id: '/notes/upload'
+      path: '/upload'
+      fullPath: '/notes/upload'
+      preLoaderRoute: typeof NotesUploadRouteImport
+      parentRoute: typeof NotesRoute
+    }
+    '/notes/$id': {
+      id: '/notes/$id'
+      path: '/$id'
+      fullPath: '/notes/$id'
+      preLoaderRoute: typeof NotesIdRouteImport
+      parentRoute: typeof NotesRoute
+    }
   }
 }
+
+interface NotesRouteChildren {
+  NotesIdRoute: typeof NotesIdRoute
+  NotesUploadRoute: typeof NotesUploadRoute
+}
+
+const NotesRouteChildren: NotesRouteChildren = {
+  NotesIdRoute: NotesIdRoute,
+  NotesUploadRoute: NotesUploadRoute,
+}
+
+const NotesRouteWithChildren = NotesRoute._addFileChildren(NotesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -221,7 +271,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   ExamHubRoute: ExamHubRoute,
   LoginRoute: LoginRoute,
-  NotesRoute: NotesRoute,
+  NotesRoute: NotesRouteWithChildren,
   ProfileRoute: ProfileRoute,
   PyqRoute: PyqRoute,
   ToolsRoute: ToolsRoute,
@@ -229,3 +279,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
