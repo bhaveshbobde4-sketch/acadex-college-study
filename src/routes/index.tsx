@@ -132,3 +132,49 @@ function SectionHeader({ title, to }: { title: string; to: string }) {
     </div>
   );
 }
+
+function TrendingSection() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["trending-notes"],
+    queryFn: () => fetchTrendingNotes(6),
+  });
+  const grads = [
+    "from-violet-500/30 to-fuchsia-500/20",
+    "from-sky-500/30 to-indigo-500/20",
+    "from-emerald-400/25 to-teal-500/20",
+  ];
+  return (
+    <section className="mt-7">
+      <SectionHeader title="Trending notes" to="/notes" />
+      <div className="mt-3 -mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2">
+        {isLoading ? (
+          <div className="min-w-[72%] glass rounded-3xl p-4 h-36 animate-pulse" />
+        ) : !data || data.length === 0 ? (
+          <div className="min-w-full glass rounded-3xl p-6 text-center text-xs text-muted-foreground">
+            No notes yet — be the first to upload!
+          </div>
+        ) : (
+          data.map((n, i) => (
+            <Link
+              key={n.id}
+              to="/notes"
+              className={`snap-start min-w-[72%] glass rounded-3xl p-4 bg-gradient-to-br ${grads[i % grads.length]}`}
+            >
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="rounded-full bg-white/10 px-2 py-0.5">{n.subject}</span>
+                <span>{n.downloads} ↓</span>
+              </div>
+              <div className="mt-6 text-base font-semibold leading-snug line-clamp-2">{n.title}</div>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {n.branch} · {n.semester}
+                </span>
+                <span className="btn-brand text-xs font-medium rounded-xl px-3 py-1.5">Open</span>
+              </div>
+            </Link>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
