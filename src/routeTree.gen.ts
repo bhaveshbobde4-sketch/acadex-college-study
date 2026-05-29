@@ -9,8 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as PyqRouteImport } from './routes/pyq'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as NotesRouteImport } from './routes/notes'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CommunityRouteImport } from './routes/community'
+import { Route as AiRouteImport } from './routes/ai'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ToolsRoute = ToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PyqRoute = PyqRouteImport.update({
+  id: '/pyq',
+  path: '/pyq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiRoute = AiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +61,130 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
+  '/community': typeof CommunityRoute
+  '/login': typeof LoginRoute
+  '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
+  '/pyq': typeof PyqRoute
+  '/tools': typeof ToolsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
+  '/community': typeof CommunityRoute
+  '/login': typeof LoginRoute
+  '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
+  '/pyq': typeof PyqRoute
+  '/tools': typeof ToolsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
+  '/community': typeof CommunityRoute
+  '/login': typeof LoginRoute
+  '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
+  '/pyq': typeof PyqRoute
+  '/tools': typeof ToolsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/ai'
+    | '/community'
+    | '/login'
+    | '/notes'
+    | '/profile'
+    | '/pyq'
+    | '/tools'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/ai'
+    | '/community'
+    | '/login'
+    | '/notes'
+    | '/profile'
+    | '/pyq'
+    | '/tools'
+  id:
+    | '__root__'
+    | '/'
+    | '/ai'
+    | '/community'
+    | '/login'
+    | '/notes'
+    | '/profile'
+    | '/pyq'
+    | '/tools'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AiRoute: typeof AiRoute
+  CommunityRoute: typeof CommunityRoute
+  LoginRoute: typeof LoginRoute
+  NotesRoute: typeof NotesRoute
+  ProfileRoute: typeof ProfileRoute
+  PyqRoute: typeof PyqRoute
+  ToolsRoute: typeof ToolsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tools': {
+      id: '/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pyq': {
+      id: '/pyq'
+      path: '/pyq'
+      fullPath: '/pyq'
+      preLoaderRoute: typeof PyqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +197,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AiRoute: AiRoute,
+  CommunityRoute: CommunityRoute,
+  LoginRoute: LoginRoute,
+  NotesRoute: NotesRoute,
+  ProfileRoute: ProfileRoute,
+  PyqRoute: PyqRoute,
+  ToolsRoute: ToolsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
