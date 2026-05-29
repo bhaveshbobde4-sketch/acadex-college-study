@@ -127,6 +127,97 @@ export type Database = {
         }
         Relationships: []
       }
+      post_comments: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          post_id: string
+          text: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          post_id: string
+          text: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          anonymous: boolean
+          author_id: string
+          comments_count: number
+          created_at: string
+          id: string
+          likes_count: number
+          tab: Database["public"]["Enums"]["post_tab"]
+          text: string
+        }
+        Insert: {
+          anonymous?: boolean
+          author_id: string
+          comments_count?: number
+          created_at?: string
+          id?: string
+          likes_count?: number
+          tab?: Database["public"]["Enums"]["post_tab"]
+          text: string
+        }
+        Update: {
+          anonymous?: boolean
+          author_id?: string
+          comments_count?: number
+          created_at?: string
+          id?: string
+          likes_count?: number
+          tab?: Database["public"]["Enums"]["post_tab"]
+          text?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -157,6 +248,32 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_notes: {
+        Row: {
+          created_at: string
+          note_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_notes_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -166,6 +283,7 @@ export type Database = {
     }
     Enums: {
       exam_event_type: "timetable" | "notice" | "important_date" | "result"
+      post_tab: "Feed" | "Doubts" | "Internships" | "Confessions"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -294,6 +412,7 @@ export const Constants = {
   public: {
     Enums: {
       exam_event_type: ["timetable", "notice", "important_date", "result"],
+      post_tab: ["Feed", "Doubts", "Internships", "Confessions"],
     },
   },
 } as const
