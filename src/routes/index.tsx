@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Flame, BookOpen, FileText, Sparkles, Calendar, ChevronRight,
-  Timer, Calculator, GraduationCap, TrendingUp,
+  Timer, Calculator, TrendingUp, GraduationCap,
 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { fetchTrendingNotes, pdfPublicUrl } from "@/lib/notes-api";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,12 +18,6 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const trending = [
-  { title: "DSA — Trees & Graphs", subject: "CS", downloads: "12.4k", grad: "from-violet-500/30 to-fuchsia-500/20" },
-  { title: "Thermodynamics Cheatsheet", subject: "ME", downloads: "8.1k", grad: "from-sky-500/30 to-indigo-500/20" },
-  { title: "Signals & Systems", subject: "ECE", downloads: "6.7k", grad: "from-emerald-400/25 to-teal-500/20" },
-];
-
 const upcoming = [
   { name: "Operating Systems", date: "in 3 days", code: "CS304" },
   { name: "Engineering Maths III", date: "in 6 days", code: "MA301" },
@@ -29,9 +26,9 @@ const upcoming = [
 const quick = [
   { to: "/tools", label: "Pomodoro", icon: Timer },
   { to: "/tools", label: "CGPA", icon: Calculator },
-  { to: "/pyq", label: "PYQs", icon: FileText },
+  { to: "/exam-hub", label: "Exam Hub", icon: Calendar },
   { to: "/ai", label: "AI Tutor", icon: Sparkles },
-];
+] as const;
 
 function HomePage() {
   return (
