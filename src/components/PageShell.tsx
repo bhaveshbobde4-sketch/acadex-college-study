@@ -12,7 +12,7 @@ export function PageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen pb-32">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-md px-4 pt-8">
         {(title || right) && (
           <header className="mb-6 flex items-end justify-between gap-3">
