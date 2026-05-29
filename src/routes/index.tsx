@@ -97,24 +97,8 @@ function HomePage() {
       </section>
 
       {/* Trending notes */}
-      <section className="mt-7">
-        <SectionHeader title="Trending notes" to="/notes" />
-        <div className="mt-3 -mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2">
-          {trending.map((n) => (
-            <div key={n.title} className={`snap-start min-w-[72%] glass rounded-3xl p-4 bg-gradient-to-br ${n.grad}`}>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="rounded-full bg-white/10 px-2 py-0.5">{n.subject}</span>
-                <span>{n.downloads} ↓</span>
-              </div>
-              <div className="mt-6 text-base font-semibold leading-snug">{n.title}</div>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">PDF · 2.1 MB</span>
-                <button className="btn-brand text-xs font-medium rounded-xl px-3 py-1.5">Open</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <TrendingSection />
+
 
       {/* Upcoming exams */}
       <section className="mt-7">
