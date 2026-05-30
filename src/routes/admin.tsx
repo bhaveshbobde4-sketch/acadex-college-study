@@ -258,7 +258,7 @@ function ExamAdmin() {
     mutationFn: async (f: ExamForm) => {
       if (!f.title.trim()) throw new Error("Title required");
       const payload = {
-        type: f.type,
+        type: f.type as "timetable" | "notice" | "important_date" | "result",
         title: f.title.trim(),
         description: f.description.trim() || null,
         branch: f.branch.trim() || null,

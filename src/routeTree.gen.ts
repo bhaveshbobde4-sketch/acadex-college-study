@@ -19,7 +19,6 @@ import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as NotesUploadRouteImport } from './routes/notes.upload'
 import { Route as NotesIdRouteImport } from './routes/notes.$id'
 
 const ToolsRoute = ToolsRouteImport.update({
@@ -72,11 +71,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NotesUploadRoute = NotesUploadRouteImport.update({
-  id: '/upload',
-  path: '/upload',
-  getParentRoute: () => NotesRoute,
-} as any)
 const NotesIdRoute = NotesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -95,7 +89,6 @@ export interface FileRoutesByFullPath {
   '/pyq': typeof PyqRoute
   '/tools': typeof ToolsRoute
   '/notes/$id': typeof NotesIdRoute
-  '/notes/upload': typeof NotesUploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,7 +102,6 @@ export interface FileRoutesByTo {
   '/pyq': typeof PyqRoute
   '/tools': typeof ToolsRoute
   '/notes/$id': typeof NotesIdRoute
-  '/notes/upload': typeof NotesUploadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,7 +116,6 @@ export interface FileRoutesById {
   '/pyq': typeof PyqRoute
   '/tools': typeof ToolsRoute
   '/notes/$id': typeof NotesIdRoute
-  '/notes/upload': typeof NotesUploadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,7 +131,6 @@ export interface FileRouteTypes {
     | '/pyq'
     | '/tools'
     | '/notes/$id'
-    | '/notes/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -154,7 +144,6 @@ export interface FileRouteTypes {
     | '/pyq'
     | '/tools'
     | '/notes/$id'
-    | '/notes/upload'
   id:
     | '__root__'
     | '/'
@@ -168,7 +157,6 @@ export interface FileRouteTypes {
     | '/pyq'
     | '/tools'
     | '/notes/$id'
-    | '/notes/upload'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -256,13 +244,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/notes/upload': {
-      id: '/notes/upload'
-      path: '/upload'
-      fullPath: '/notes/upload'
-      preLoaderRoute: typeof NotesUploadRouteImport
-      parentRoute: typeof NotesRoute
-    }
     '/notes/$id': {
       id: '/notes/$id'
       path: '/$id'
@@ -275,12 +256,10 @@ declare module '@tanstack/react-router' {
 
 interface NotesRouteChildren {
   NotesIdRoute: typeof NotesIdRoute
-  NotesUploadRoute: typeof NotesUploadRoute
 }
 
 const NotesRouteChildren: NotesRouteChildren = {
   NotesIdRoute: NotesIdRoute,
-  NotesUploadRoute: NotesUploadRoute,
 }
 
 const NotesRouteWithChildren = NotesRoute._addFileChildren(NotesRouteChildren)
@@ -300,3 +279,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

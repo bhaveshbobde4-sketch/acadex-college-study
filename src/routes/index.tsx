@@ -5,8 +5,7 @@ import {
   Timer, Calculator, TrendingUp, GraduationCap,
 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
-import { fetchTrendingNotes, pdfPublicUrl } from "@/lib/notes-api";
-import { useAuth } from "@/hooks/use-auth";
+import { fetchTrendingNotes } from "@/lib/notes-api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
