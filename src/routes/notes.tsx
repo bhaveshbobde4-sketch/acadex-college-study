@@ -26,6 +26,7 @@ function NotesPage() {
   const [sem, setSem] = useState("Sem 5");
   const [search, setSearch] = useState("");
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
 
   const { data: notes, isLoading } = useQuery({
@@ -61,9 +62,11 @@ function NotesPage() {
       title="Notes"
       subtitle="Library"
       right={
-        <Link to="/notes/upload" aria-label="Upload" className="btn-brand h-9 w-9 rounded-full flex items-center justify-center">
-          <Plus className="h-4 w-4" />
-        </Link>
+        isAdmin ? (
+          <Link to="/admin" aria-label="Admin" className="btn-brand h-9 w-9 rounded-full flex items-center justify-center">
+            <Plus className="h-4 w-4" />
+          </Link>
+        ) : null
       }
     >
       <div className="glass rounded-2xl flex items-center gap-2 px-3 py-2.5">
@@ -95,16 +98,16 @@ function NotesPage() {
           <EmptyState
             title="No notes yet"
             body={
-              user
-                ? `No notes for ${branch} · ${sem} yet. Be the first to upload one!`
-                : `Sign in to upload the first notes for ${branch} · ${sem}.`
+              isAdmin
+                ? `No notes for ${branch} · ${sem} yet. Add one from the Admin Panel.`
+                : `No notes for ${branch} · ${sem} yet. Check back soon!`
             }
             cta={
-              user ? (
-                <Link to="/notes/upload" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Upload notes</Link>
-              ) : (
+              isAdmin ? (
+                <Link to="/admin" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Open Admin</Link>
+              ) : !user ? (
                 <Link to="/login" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Sign in</Link>
-              )
+              ) : null
             }
           />
         ) : (
