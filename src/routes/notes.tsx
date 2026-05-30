@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Download, Bookmark, FileText, Filter, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
-import { fetchNotes, logDownload, pdfPublicUrl, fetchMySavedIds, toggleSave } from "@/lib/notes-api";
+import { fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note } from "@/lib/notes-api";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -43,11 +44,13 @@ function NotesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const handleDownload = async (id: string, path: string, title: string) => {
+  const handleDownload = async (note: Note) => {
+    const url = noteDisplayUrl(note);
+    if (!url) { toast.error("No PDF link"); return; }
     try {
-      await logDownload(id, user?.id ?? null);
-      window.open(pdfPublicUrl(path), "_blank", "noopener");
-      toast.success(`Opening ${title}`);
+      await logDownload(note.id, user?.id ?? null);
+      window.open(url, "_blank", "noopener");
+      toast.success(`Opening ${note.title}`);
     } catch {
       toast.error("Could not open file");
     }
