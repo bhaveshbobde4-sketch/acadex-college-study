@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Download, Bookmark, FileText, Filter, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
-import { fetchNotes, logDownload, pdfPublicUrl, fetchMySavedIds, toggleSave } from "@/lib/notes-api";
+import { fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note } from "@/lib/notes-api";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -25,6 +26,7 @@ function NotesPage() {
   const [sem, setSem] = useState("Sem 5");
   const [search, setSearch] = useState("");
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
 
   const { data: notes, isLoading } = useQuery({
@@ -43,11 +45,13 @@ function NotesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const handleDownload = async (id: string, path: string, title: string) => {
+  const handleDownload = async (note: Note) => {
+    const url = noteDisplayUrl(note);
+    if (!url) { toast.error("No PDF link"); return; }
     try {
-      await logDownload(id, user?.id ?? null);
-      window.open(pdfPublicUrl(path), "_blank", "noopener");
-      toast.success(`Opening ${title}`);
+      await logDownload(note.id, user?.id ?? null);
+      window.open(url, "_blank", "noopener");
+      toast.success(`Opening ${note.title}`);
     } catch {
       toast.error("Could not open file");
     }
@@ -58,9 +62,11 @@ function NotesPage() {
       title="Notes"
       subtitle="Library"
       right={
-        <Link to="/notes/upload" aria-label="Upload" className="btn-brand h-9 w-9 rounded-full flex items-center justify-center">
-          <Plus className="h-4 w-4" />
-        </Link>
+        isAdmin ? (
+          <Link to="/admin" aria-label="Admin" className="btn-brand h-9 w-9 rounded-full flex items-center justify-center">
+            <Plus className="h-4 w-4" />
+          </Link>
+        ) : null
       }
     >
       <div className="glass rounded-2xl flex items-center gap-2 px-3 py-2.5">
@@ -92,16 +98,16 @@ function NotesPage() {
           <EmptyState
             title="No notes yet"
             body={
-              user
-                ? `No notes for ${branch} · ${sem} yet. Be the first to upload one!`
-                : `Sign in to upload the first notes for ${branch} · ${sem}.`
+              isAdmin
+                ? `No notes for ${branch} · ${sem} yet. Add one from the Admin Panel.`
+                : `No notes for ${branch} · ${sem} yet. Check back soon!`
             }
             cta={
-              user ? (
-                <Link to="/notes/upload" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Upload notes</Link>
-              ) : (
+              isAdmin ? (
+                <Link to="/admin" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Open Admin</Link>
+              ) : !user ? (
                 <Link to="/login" className="btn-brand inline-flex rounded-xl px-4 py-2 text-xs font-medium mt-3">Sign in</Link>
-              )
+              ) : null
             }
           />
         ) : (
@@ -141,7 +147,7 @@ function NotesPage() {
                     <Bookmark className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
                   </button>
                   <button
-                    onClick={() => handleDownload(n.id, n.pdf_path, n.title)}
+                    onClick={() => handleDownload(n)}
                     className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center shrink-0"
                     aria-label="Download"
                   >

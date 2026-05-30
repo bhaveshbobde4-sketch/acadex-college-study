@@ -1,6 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bookmark, Download, Settings, Crown, ChevronRight, LogOut } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Bookmark, Download, Settings, Crown, ChevronRight, LogOut, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
+import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -12,33 +15,45 @@ export const Route = createFileRoute("/profile")({
   component: ProfilePage,
 });
 
-const rows = [
-  { label: "Saved notes", value: "42", icon: Bookmark },
-  { label: "Downloads", value: "118", icon: Download },
-  { label: "Settings", value: "", icon: Settings },
-];
-
 function ProfilePage() {
+  const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
+  const navigate = useNavigate();
+
+  const initial = (user?.user_metadata?.full_name ?? user?.email ?? "A").charAt(0).toUpperCase();
+  const name = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Guest";
+  const email = user?.email ?? "Not signed in";
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate({ to: "/login" });
+  };
+
   return (
     <PageShell subtitle="Account" title="Profile">
       <section className="glass-strong rounded-3xl p-5 flex items-center gap-4 gradient-border">
         <div className="relative">
           <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center text-xl font-semibold">
-            A
+            {initial}
           </div>
           <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-400 border-2 border-background" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold truncate">Aarav Mehta</h2>
-          <p className="text-xs text-muted-foreground truncate">aarav.mehta@iitb.ac.in</p>
-          <p className="text-[11px] text-muted-foreground mt-1">CSE · Sem 5 · IIT Bombay</p>
+          <h2 className="text-lg font-semibold truncate">{name}</h2>
+          <p className="text-xs text-muted-foreground truncate">{email}</p>
+          {isAdmin && (
+            <p className="text-[11px] mt-1 inline-flex items-center gap-1 text-amber-300">
+              <ShieldCheck className="h-3 w-3" /> Admin
+            </p>
+          )}
         </div>
       </section>
 
       <section className="mt-5 grid grid-cols-3 gap-3">
         <Stat label="Streak" value="14" />
-        <Stat label="Notes saved" value="42" />
-        <Stat label="Hours focus" value="86" />
+        <Stat label="Notes saved" value="—" />
+        <Stat label="Hours focus" value="—" />
       </section>
 
       <section className="mt-5 relative overflow-hidden rounded-3xl p-5 glass gradient-border">
@@ -56,21 +71,47 @@ function ProfilePage() {
       </section>
 
       <section className="mt-5 glass rounded-3xl divide-y divide-white/5">
-        {rows.map(({ label, value, icon: Icon }) => (
-          <button key={label} className="w-full flex items-center gap-3 px-4 py-4 text-left">
-            <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <Icon className="h-4 w-4" />
+        {isAdmin && (
+          <Link to="/admin" className="w-full flex items-center gap-3 px-4 py-4 text-left">
+            <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-amber-300" />
             </div>
-            <span className="flex-1 text-sm">{label}</span>
-            {value && <span className="text-xs text-muted-foreground">{value}</span>}
+            <span className="flex-1 text-sm">Admin Panel</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        ))}
+          </Link>
+        )}
+        <button className="w-full flex items-center gap-3 px-4 py-4 text-left">
+          <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <Bookmark className="h-4 w-4" />
+          </div>
+          <span className="flex-1 text-sm">Saved notes</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+        <button className="w-full flex items-center gap-3 px-4 py-4 text-left">
+          <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <Download className="h-4 w-4" />
+          </div>
+          <span className="flex-1 text-sm">Downloads</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+        <button className="w-full flex items-center gap-3 px-4 py-4 text-left">
+          <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <Settings className="h-4 w-4" />
+          </div>
+          <span className="flex-1 text-sm">Settings</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
       </section>
 
-      <Link to="/login" className="mt-6 w-full glass rounded-2xl px-4 py-3 flex items-center justify-center gap-2 text-sm text-destructive">
-        <LogOut className="h-4 w-4" /> Sign out
-      </Link>
+      {user ? (
+        <button onClick={handleSignOut} className="mt-6 w-full glass rounded-2xl px-4 py-3 flex items-center justify-center gap-2 text-sm text-destructive">
+          <LogOut className="h-4 w-4" /> Sign out
+        </button>
+      ) : (
+        <Link to="/login" className="mt-6 w-full glass rounded-2xl px-4 py-3 flex items-center justify-center gap-2 text-sm">
+          Sign in
+        </Link>
+      )}
     </PageShell>
   );
 }
