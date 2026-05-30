@@ -2,13 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
-import { fetchNoteById, pdfPublicUrl, logDownload } from "@/lib/notes-api";
+import { fetchNoteById, noteDisplayUrl, logDownload } from "@/lib/notes-api";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/notes/$id")({
-  head: () => ({
-    meta: [{ title: "Note viewer — Acadex" }],
-  }),
+  head: () => ({ meta: [{ title: "Note viewer — Acadex" }] }),
   component: NoteViewer,
 });
 
@@ -36,7 +34,7 @@ function NoteViewer() {
       </PageShell>
     );
 
-  const url = pdfPublicUrl(note.pdf_path);
+  const url = noteDisplayUrl(note);
 
   return (
     <PageShell
@@ -48,18 +46,26 @@ function NoteViewer() {
         </Link>
       }
     >
-      <div className="glass rounded-3xl overflow-hidden gradient-border" style={{ height: "70vh" }}>
-        <iframe src={`${url}#toolbar=0`} title={note.title} className="w-full h-full bg-white" />
-      </div>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener"
-        onClick={() => logDownload(note.id, user?.id ?? null)}
-        className="btn-brand mt-4 w-full rounded-2xl py-3 text-sm font-medium flex items-center justify-center gap-2"
-      >
-        <Download className="h-4 w-4" /> Download PDF
-      </a>
+      {url ? (
+        <div className="glass rounded-3xl overflow-hidden gradient-border" style={{ height: "70vh" }}>
+          <iframe src={`${url}#toolbar=0`} title={note.title} className="w-full h-full bg-white" />
+        </div>
+      ) : (
+        <div className="glass rounded-3xl p-8 text-center text-sm text-muted-foreground">
+          No PDF link attached yet.
+        </div>
+      )}
+      {url && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener"
+          onClick={() => logDownload(note.id, user?.id ?? null)}
+          className="btn-brand mt-4 w-full rounded-2xl py-3 text-sm font-medium flex items-center justify-center gap-2"
+        >
+          <Download className="h-4 w-4" /> Open / Download PDF
+        </a>
+      )}
     </PageShell>
   );
 }

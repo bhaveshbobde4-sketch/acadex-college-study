@@ -7,7 +7,8 @@ export type Note = {
   branch: string;
   semester: string;
   description: string | null;
-  pdf_path: string;
+  pdf_path: string | null;
+  pdf_url: string | null;
   file_size_kb: number | null;
   downloads: number;
   is_hot: boolean;
@@ -29,7 +30,7 @@ export async function fetchNotes(filters: NoteFilters = {}): Promise<Note[]> {
     q = q.or(`title.ilike.%${filters.search}%,subject.ilike.%${filters.search}%`);
   const { data, error } = await q.limit(100);
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as Note[];
 }
 
 export async function fetchTrendingNotes(limit = 6): Promise<Note[]> {
@@ -39,55 +40,27 @@ export async function fetchTrendingNotes(limit = 6): Promise<Note[]> {
     .order("downloads", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as Note[];
 }
 
 export async function fetchNoteById(id: string): Promise<Note | null> {
   const { data, error } = await supabase.from("notes").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
-  return data;
+  return data as Note | null;
 }
 
-export function pdfPublicUrl(path: string): string {
-  const { data } = supabase.storage.from("notes-pdfs").getPublicUrl(path);
-  return data.publicUrl;
+/** Returns a usable URL — prefers the admin-supplied pdf_url, falls back to the legacy storage bucket. */
+export function noteDisplayUrl(note: Pick<Note, "pdf_url" | "pdf_path">): string {
+  if (note.pdf_url) return note.pdf_url;
+  if (note.pdf_path) {
+    const { data } = supabase.storage.from("notes-pdfs").getPublicUrl(note.pdf_path);
+    return data.publicUrl;
+  }
+  return "";
 }
 
 export async function logDownload(noteId: string, userId: string | null) {
   await supabase.from("note_downloads").insert({ note_id: noteId, user_id: userId });
-}
-
-export async function uploadNotePdf(input: {
-  file: File;
-  title: string;
-  subject: string;
-  branch: string;
-  semester: string;
-  description?: string;
-}) {
-  const { data: u } = await supabase.auth.getUser();
-  const uid = u.user?.id;
-  if (!uid) throw new Error("Sign in to upload");
-
-  const safe = input.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${uid}/${Date.now()}_${safe}`;
-  const up = await supabase.storage.from("notes-pdfs").upload(path, input.file, {
-    contentType: input.file.type || "application/pdf",
-    upsert: false,
-  });
-  if (up.error) throw up.error;
-
-  const { error } = await supabase.from("notes").insert({
-    title: input.title,
-    subject: input.subject,
-    branch: input.branch,
-    semester: input.semester,
-    description: input.description ?? null,
-    pdf_path: path,
-    file_size_kb: Math.round(input.file.size / 1024),
-    uploaded_by: uid,
-  });
-  if (error) throw error;
 }
 
 export async function fetchMySavedIds(): Promise<Set<string>> {
