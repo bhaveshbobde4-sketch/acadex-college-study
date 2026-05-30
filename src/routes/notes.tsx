@@ -144,7 +144,7 @@ function NotesPage() {
                     <Bookmark className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
                   </button>
                   <button
-                    onClick={() => handleDownload(n.id, n.pdf_path, n.title)}
+                    onClick={() => handleDownload(n)}
                     className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center shrink-0"
                     aria-label="Download"
                   >
