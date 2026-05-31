@@ -59,18 +59,18 @@ function AdminPage() {
   return (
     <PageShell title="Admin Panel" subtitle="Manage content">
       <div className="glass rounded-2xl p-1 flex gap-1">
-        {(["notes", "exam"] as const).map((t) => (
+        {(["notes", "exam", "taxonomy"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 rounded-xl py-2 text-xs font-medium ${tab === t ? "btn-brand" : "text-muted-foreground"}`}
           >
-            {t === "notes" ? "Notes / PDFs" : "Exam Hub"}
+            {t === "notes" ? "Notes" : t === "exam" ? "Exam Hub" : "Branches"}
           </button>
         ))}
       </div>
 
-      {tab === "notes" ? <NotesAdmin /> : <ExamAdmin />}
+      {tab === "notes" ? <NotesAdmin /> : tab === "exam" ? <ExamAdmin /> : <TaxonomyAdmin />}
     </PageShell>
   );
 }
