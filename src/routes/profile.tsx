@@ -52,9 +52,9 @@ function ProfilePage() {
       </section>
 
       <section className="mt-5 grid grid-cols-3 gap-3">
-        <Stat label="Streak" value="14" />
-        <Stat label="Notes saved" value="—" />
-        <Stat label="Hours focus" value="—" />
+        <Stat label="Branch" value={"—"} />
+        <Stat label="Saved" value={"—"} />
+        <Stat label="Hours" value={"—"} />
       </section>
 
       <section className="mt-5 relative overflow-hidden rounded-3xl p-5 glass gradient-border">
