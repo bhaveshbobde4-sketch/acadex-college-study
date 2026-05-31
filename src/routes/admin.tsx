@@ -7,6 +7,7 @@ import { PageShell } from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-admin";
+import { useBranches, useSemesters } from "@/hooks/use-taxonomy";
 import { fetchNotes, type Note } from "@/lib/notes-api";
 
 export const Route = createFileRoute("/admin")({
@@ -14,8 +15,6 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const branches = ["CSE", "ECE", "ME", "EE", "CE", "IT"];
-const semesters = ["Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7", "Sem 8"];
 const examTypes = [
   { value: "timetable", label: "Timetable" },
   { value: "notice", label: "Notice" },
@@ -23,11 +22,14 @@ const examTypes = [
   { value: "result", label: "Result link" },
 ];
 
+type Tab = "notes" | "exam" | "taxonomy";
+
 function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"notes" | "exam">("notes");
+  const [tab, setTab] = useState<Tab>("notes");
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login", replace: true });
