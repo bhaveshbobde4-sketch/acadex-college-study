@@ -94,6 +94,8 @@ const emptyNote: NoteForm = {
 function NotesAdmin() {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { data: branchList = [] } = useBranches();
+  const { data: semList = [] } = useSemesters();
   const [form, setForm] = useState<NoteForm | null>(null);
 
   const { data: notes, isLoading } = useQuery({
@@ -162,8 +164,8 @@ function NotesAdmin() {
           <TextField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
           <TextField label="Subject" value={form.subject} onChange={(v) => setForm({ ...form, subject: v })} />
           <div className="grid grid-cols-2 gap-3">
-            <SelectField label="Branch" value={form.branch} options={branches} onChange={(v) => setForm({ ...form, branch: v })} />
-            <SelectField label="Semester" value={form.semester} options={semesters} onChange={(v) => setForm({ ...form, semester: v })} />
+            <SelectField label="Branch" value={form.branch} options={branchList.map((b) => b.name)} onChange={(v) => setForm({ ...form, branch: v })} />
+            <SelectField label="Semester" value={form.semester} options={semList.map((s) => s.name)} onChange={(v) => setForm({ ...form, semester: v })} />
           </div>
           <TextField label="PDF URL" placeholder="https://drive.google.com/…" value={form.pdf_url} onChange={(v) => setForm({ ...form, pdf_url: v })} />
           <TextArea label="Description (optional)" value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
