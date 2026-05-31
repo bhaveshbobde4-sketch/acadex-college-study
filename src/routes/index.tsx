@@ -6,6 +6,9 @@ import {
 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { fetchTrendingNotes } from "@/lib/notes-api";
+import { useDisplayName } from "@/hooks/use-display-name";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,31 +32,60 @@ const quick = [
   { to: "/ai", label: "AI Tutor", icon: Sparkles },
 ] as const;
 
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 function HomePage() {
+  const { firstName } = useDisplayName();
+  const { user } = useAuth();
+  const { data: stats } = useQuery({
+    queryKey: ["home-stats", user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const [dl, saved] = await Promise.all([
+        supabase
+          .from("note_downloads")
+          .select("downloaded_at", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .gte("downloaded_at", sevenDaysAgo),
+        supabase
+          .from("saved_notes")
+          .select("note_id", { count: "exact", head: true })
+          .eq("user_id", user!.id),
+      ]);
+      return { weekly: dl.count ?? 0, saved: saved.count ?? 0 };
+    },
+  });
+
   return (
     <PageShell>
       {/* Welcome banner */}
       <section className="relative overflow-hidden rounded-3xl p-6 glass gradient-border">
         <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-[var(--brand)] opacity-30 blur-3xl" />
         <div className="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[var(--brand-2)] opacity-25 blur-3xl" />
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Good evening</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{greeting()}</p>
         <h1 className="mt-1 text-2xl font-semibold">
-          Hey Aarav, <span className="gradient-text">let's keep it going.</span>
+          Hey {firstName}, <span className="gradient-text">let's keep it going.</span>
         </h1>
 
         <div className="mt-5 flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-3 py-2 border border-white/10">
             <Flame className="h-5 w-5 text-orange-400" />
             <div>
-              <div className="text-sm font-semibold leading-none">14 days</div>
-              <div className="text-[11px] text-muted-foreground">study streak</div>
+              <div className="text-sm font-semibold leading-none">{stats?.saved ?? 0} saved</div>
+              <div className="text-[11px] text-muted-foreground">your library</div>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-3 py-2 border border-white/10">
             <TrendingUp className="h-5 w-5 text-emerald-400" />
             <div>
-              <div className="text-sm font-semibold leading-none">+18%</div>
-              <div className="text-[11px] text-muted-foreground">this week</div>
+              <div className="text-sm font-semibold leading-none">{stats?.weekly ?? 0} this week</div>
+              <div className="text-[11px] text-muted-foreground">PDFs opened</div>
             </div>
           </div>
         </div>

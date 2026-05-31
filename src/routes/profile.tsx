@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-admin";
+import { useDisplayName } from "@/hooks/use-display-name";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -20,8 +21,8 @@ function ProfilePage() {
   const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
-  const initial = (user?.user_metadata?.full_name ?? user?.email ?? "A").charAt(0).toUpperCase();
-  const name = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Guest";
+  const { name } = useDisplayName();
+  const initial = (name || "S").charAt(0).toUpperCase();
   const email = user?.email ?? "Not signed in";
 
   const handleSignOut = async () => {
@@ -51,9 +52,9 @@ function ProfilePage() {
       </section>
 
       <section className="mt-5 grid grid-cols-3 gap-3">
-        <Stat label="Streak" value="14" />
-        <Stat label="Notes saved" value="—" />
-        <Stat label="Hours focus" value="—" />
+        <Stat label="Branch" value={"—"} />
+        <Stat label="Saved" value={"—"} />
+        <Stat label="Hours" value={"—"} />
       </section>
 
       <section className="mt-5 relative overflow-hidden rounded-3xl p-5 glass gradient-border">
