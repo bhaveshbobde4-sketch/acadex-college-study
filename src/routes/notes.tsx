@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Download, Bookmark, FileText, Filter, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { PageShell } from "@/components/PageShell";
 import { fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note } from "@/lib/notes-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-admin";
+import { useBranches, useSemesters } from "@/hooks/use-taxonomy";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -18,19 +19,22 @@ export const Route = createFileRoute("/notes")({
   component: NotesPage,
 });
 
-const branches = ["CSE", "ECE", "ME", "EE", "CE", "IT"];
-const semesters = ["Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7", "Sem 8"];
-
 function NotesPage() {
-  const [branch, setBranch] = useState("CSE");
-  const [sem, setSem] = useState("Sem 5");
+  const { data: branches = [] } = useBranches();
+  const { data: semesters = [] } = useSemesters();
+  const [branch, setBranch] = useState("");
+  const [sem, setSem] = useState("");
   const [search, setSearch] = useState("");
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
 
+  useEffect(() => { if (!branch && branches.length) setBranch(branches[0].name); }, [branches, branch]);
+  useEffect(() => { if (!sem && semesters.length) setSem(semesters[0].name); }, [semesters, sem]);
+
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes", branch, sem, search],
+    enabled: !!branch && !!sem,
     queryFn: () => fetchNotes({ branch, semester: sem, search: search.trim() || undefined }),
   });
   const { data: savedIds } = useQuery({
@@ -82,8 +86,8 @@ function NotesPage() {
         </button>
       </div>
 
-      <Chips label="Branch" items={branches} value={branch} onChange={setBranch} />
-      <Chips label="Semester" items={semesters} value={sem} onChange={setSem} />
+      <Chips label="Branch" items={branches.map((b) => b.name)} value={branch} onChange={setBranch} />
+      <Chips label="Semester" items={semesters.map((s) => s.name)} value={sem} onChange={setSem} />
 
       <section className="mt-6">
         <h2 className="text-sm font-semibold text-muted-foreground mb-2">
