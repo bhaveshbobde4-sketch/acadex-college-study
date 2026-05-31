@@ -409,3 +409,126 @@ function SelectField({ label, value, options, onChange }: { label: string; value
     </label>
   );
 }
+
+/* ───────── Taxonomy admin (branches & semesters) ───────── */
+
+type TaxRow = { id: string; name: string; sort_order: number };
+
+function TaxonomyAdmin() {
+  return (
+    <div className="mt-4 space-y-6">
+      <TaxonomyList table="branches" title="Branches" queryKey="branches" />
+      <TaxonomyList table="semesters" title="Semesters" queryKey="semesters" />
+    </div>
+  );
+}
+
+function TaxonomyList({ table, title, queryKey }: { table: "branches" | "semesters"; title: string; queryKey: string }) {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [sortOrder, setSortOrder] = useState("");
+  const [editing, setEditing] = useState<TaxRow | null>(null);
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: [queryKey],
+    queryFn: async () => {
+      const { data, error } = await supabase.from(table).select("id,name,sort_order").order("sort_order").order("name");
+      if (error) throw error;
+      return (data ?? []) as TaxRow[];
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const n = name.trim();
+      if (!n) throw new Error("Name required");
+      const so = sortOrder.trim() ? parseInt(sortOrder, 10) : (rows.length + 1);
+      if (editing) {
+        const { error } = await supabase.from(table).update({ name: n, sort_order: so }).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from(table).insert({ name: n, sort_order: so });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Saved");
+      setName(""); setSortOrder(""); setEditing(null);
+      qc.invalidateQueries({ queryKey: [queryKey] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from(table).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Deleted");
+      qc.invalidateQueries({ queryKey: [queryKey] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <section className="glass rounded-3xl p-4 gradient-border space-y-3">
+      <h3 className="text-sm font-semibold">{title}</h3>
+
+      <div className="flex gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={editing ? "Edit name" : `Add ${title.toLowerCase().slice(0, -1)}`}
+          className="flex-1 glass rounded-2xl px-3 py-2.5 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
+        />
+        <input
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          placeholder="#"
+          inputMode="numeric"
+          className="w-14 glass rounded-2xl px-2 py-2.5 text-sm bg-transparent outline-none text-center placeholder:text-muted-foreground"
+        />
+        <button
+          disabled={save.isPending}
+          onClick={() => save.mutate()}
+          className="btn-brand rounded-2xl px-4 text-xs font-medium disabled:opacity-60"
+        >
+          {editing ? "Save" : "Add"}
+        </button>
+        {editing && (
+          <button onClick={() => { setEditing(null); setName(""); setSortOrder(""); }} className="rounded-2xl px-2 bg-white/5 border border-white/10" aria-label="Cancel">
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-6"><Loader2 className="h-4 w-4 animate-spin" /></div>
+      ) : !rows.length ? (
+        <p className="text-xs text-muted-foreground text-center py-4">None yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+              <span className="text-[10px] text-muted-foreground w-6 text-center">{r.sort_order}</span>
+              <span className="flex-1 text-sm truncate">{r.name}</span>
+              <button
+                onClick={() => { setEditing(r); setName(r.name); setSortOrder(String(r.sort_order)); }}
+                className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center" aria-label="Edit"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => confirm(`Delete ${r.name}? Existing notes keep this label.`) && del.mutate(r.id)}
+                className="h-8 w-8 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center" aria-label="Delete"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
