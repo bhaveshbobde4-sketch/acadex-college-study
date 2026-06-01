@@ -112,10 +112,12 @@ export type Database = {
           file_size_kb: number | null
           id: string
           is_hot: boolean
+          material_type: Database["public"]["Enums"]["material_type"]
           pdf_path: string | null
           pdf_url: string | null
           semester: string
           subject: string
+          subject_id: string | null
           title: string
           uploaded_by: string | null
         }
@@ -127,10 +129,12 @@ export type Database = {
           file_size_kb?: number | null
           id?: string
           is_hot?: boolean
+          material_type?: Database["public"]["Enums"]["material_type"]
           pdf_path?: string | null
           pdf_url?: string | null
           semester: string
           subject: string
+          subject_id?: string | null
           title: string
           uploaded_by?: string | null
         }
@@ -142,14 +146,24 @@ export type Database = {
           file_size_kb?: number | null
           id?: string
           is_hot?: boolean
+          material_type?: Database["public"]["Enums"]["material_type"]
           pdf_path?: string | null
           pdf_url?: string | null
           semester?: string
           subject?: string
+          subject_id?: string | null
           title?: string
           uploaded_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_comments: {
         Row: {
@@ -319,6 +333,33 @@ export type Database = {
         }
         Relationships: []
       }
+      subjects: {
+        Row: {
+          branch: string
+          created_at: string
+          id: string
+          name: string
+          semester: string
+          sort_order: number
+        }
+        Insert: {
+          branch: string
+          created_at?: string
+          id?: string
+          name: string
+          semester: string
+          sort_order?: number
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          id?: string
+          name?: string
+          semester?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -356,6 +397,13 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       exam_event_type: "timetable" | "notice" | "important_date" | "result"
+      material_type:
+        | "notes"
+        | "pyqs"
+        | "assignments"
+        | "syllabus"
+        | "important_questions"
+        | "lab_manuals"
       post_tab: "Feed" | "Doubts" | "Internships" | "Confessions"
     }
     CompositeTypes: {
@@ -486,6 +534,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       exam_event_type: ["timetable", "notice", "important_date", "result"],
+      material_type: [
+        "notes",
+        "pyqs",
+        "assignments",
+        "syllabus",
+        "important_questions",
+        "lab_manuals",
+      ],
       post_tab: ["Feed", "Doubts", "Internships", "Confessions"],
     },
   },
