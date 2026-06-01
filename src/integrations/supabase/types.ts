@@ -314,18 +314,21 @@ export type Database = {
       }
       semesters: {
         Row: {
+          branch: string | null
           created_at: string
           id: string
           name: string
           sort_order: number
         }
         Insert: {
+          branch?: string | null
           created_at?: string
           id?: string
           name: string
           sort_order?: number
         }
         Update: {
+          branch?: string | null
           created_at?: string
           id?: string
           name?: string

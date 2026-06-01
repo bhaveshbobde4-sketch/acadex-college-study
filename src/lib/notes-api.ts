@@ -1,9 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { MaterialType } from "@/lib/taxonomy-api";
 
 export type Note = {
   id: string;
   title: string;
   subject: string;
+  subject_id: string | null;
+  material_type: MaterialType;
   branch: string;
   semester: string;
   description: string | null;
@@ -19,6 +22,9 @@ export type Note = {
 export type NoteFilters = {
   branch?: string;
   semester?: string;
+  subject?: string;
+  subjectId?: string;
+  materialType?: MaterialType;
   search?: string;
 };
 
@@ -26,9 +32,12 @@ export async function fetchNotes(filters: NoteFilters = {}): Promise<Note[]> {
   let q = supabase.from("notes").select("*").order("downloads", { ascending: false });
   if (filters.branch) q = q.eq("branch", filters.branch);
   if (filters.semester) q = q.eq("semester", filters.semester);
+  if (filters.subjectId) q = q.eq("subject_id", filters.subjectId);
+  else if (filters.subject) q = q.eq("subject", filters.subject);
+  if (filters.materialType) q = q.eq("material_type", filters.materialType);
   if (filters.search)
     q = q.or(`title.ilike.%${filters.search}%,subject.ilike.%${filters.search}%`);
-  const { data, error } = await q.limit(100);
+  const { data, error } = await q.limit(200);
   if (error) throw error;
   return (data ?? []) as Note[];
 }
