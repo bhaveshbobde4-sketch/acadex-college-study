@@ -20,10 +20,6 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const upcoming = [
-  { name: "Operating Systems", date: "in 3 days", code: "CS304" },
-  { name: "Engineering Maths III", date: "in 6 days", code: "MA301" },
-];
 
 const quick = [
   { to: "/tools", label: "Pomodoro", icon: Timer },
