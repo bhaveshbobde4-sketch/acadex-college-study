@@ -171,3 +171,79 @@ function TrendingSection() {
     </section>
   );
 }
+
+function ContinueSection({ userId }: { userId: string | null }) {
+  const { data } = useQuery({
+    queryKey: ["recent-download", userId ?? "anon"],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("note_downloads")
+        .select("note_id, downloaded_at, notes(id,title,subject,branch,semester)")
+        .eq("user_id", userId!)
+        .order("downloaded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const note = (data as { notes?: { id: string; title: string; subject: string; branch: string; semester: string } } | null)?.notes;
+  if (!note) return null;
+  return (
+    <section className="mt-7">
+      <SectionHeader title="Continue studying" to="/notes" />
+      <Link to="/notes/$id" params={{ id: note.id }} className="block mt-3 glass rounded-3xl p-4 gradient-border">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500/40 to-sky-500/30 flex items-center justify-center">
+            <BookOpen className="h-6 w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold truncate">{note.title}</div>
+            <div className="text-xs text-muted-foreground truncate">{note.subject} · {note.branch} · {note.semester}</div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </Link>
+    </section>
+  );
+}
+
+function UpcomingSection() {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data = [] } = useQuery({
+    queryKey: ["home-upcoming"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("exam_events")
+        .select("id,title,type,event_date,branch,semester")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .limit(3);
+      return data ?? [];
+    },
+  });
+  if (!data.length) return null;
+  return (
+    <section className="mt-7">
+      <SectionHeader title="Upcoming" to="/exam-hub" />
+      <div className="mt-3 space-y-2">
+        {data.map((e) => (
+          <div key={e.id} className="glass rounded-2xl p-4 flex items-center gap-3">
+            <div className="h-11 w-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-[var(--brand-2)]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{e.title}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {[e.branch, e.semester].filter(Boolean).join(" · ") || e.type.replace("_", " ")}
+                {e.event_date ? ` · ${new Date(e.event_date).toLocaleDateString()}` : ""}
+              </div>
+            </div>
+            <GraduationCap className="h-5 w-5 text-muted-foreground" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
