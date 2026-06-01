@@ -7,7 +7,7 @@ import {
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import {
-  fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note,
+  fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note, type NoteFilters,
 } from "@/lib/notes-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-admin";
@@ -211,7 +211,7 @@ function Section({
 
 function NotesList({
   filters, isAdmin,
-}: { filters: Parameters<typeof fetchNotes>[0]; isAdmin: boolean }) {
+}: { filters: NoteFilters; isAdmin: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const queryKey = useMemo(() => ["notes", filters], [filters]);
