@@ -104,47 +104,13 @@ function HomePage() {
       </section>
 
       {/* Continue studying */}
-      <section className="mt-7">
-        <SectionHeader title="Continue studying" to="/notes" />
-        <Link to="/notes" className="block mt-3 glass rounded-3xl p-4 gradient-border">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500/40 to-sky-500/30 flex items-center justify-center">
-              <BookOpen className="h-6 w-6" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">Computer Networks — Unit 3</div>
-              <div className="text-xs text-muted-foreground">Page 42 of 78 · 12 min left</div>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full w-[54%] rounded-full bg-gradient-to-r from-violet-400 to-sky-400" />
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </Link>
-      </section>
+      <ContinueSection userId={user?.id ?? null} />
 
       {/* Trending notes */}
       <TrendingSection />
 
-
-      {/* Upcoming exams */}
-      <section className="mt-7">
-        <SectionHeader title="Upcoming exams" to="/tools" />
-        <div className="mt-3 space-y-2">
-          {upcoming.map((e) => (
-            <div key={e.code} className="glass rounded-2xl p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-[var(--brand-2)]" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold">{e.name}</div>
-                <div className="text-xs text-muted-foreground">{e.code} · {e.date}</div>
-              </div>
-              <GraduationCap className="h-5 w-5 text-muted-foreground" />
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Upcoming from Exam Hub */}
+      <UpcomingSection />
     </PageShell>
   );
 }
