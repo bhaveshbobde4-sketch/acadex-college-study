@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -103,7 +103,7 @@ function LoginPage() {
         <form onSubmit={handleEmail} className="space-y-3">
           {mode === "signup" && (
             <Field
-              icon={GraduationCap}
+              icon={User}
               placeholder="Full name"
               type="text"
               value={name}

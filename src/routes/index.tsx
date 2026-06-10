@@ -64,7 +64,9 @@ function HomePage() {
       <section className="relative overflow-hidden rounded-3xl p-6 glass gradient-border">
         <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-[var(--brand)] opacity-30 blur-3xl" />
         <div className="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[var(--brand-2)] opacity-25 blur-3xl" />
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{greeting()}</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground" suppressHydrationWarning>
+          {typeof window === "undefined" ? "Welcome back" : getGreeting()}
+        </p>
         <h1 className="mt-1 text-2xl font-semibold">
           Hey {firstName}, <span className="gradient-text">let's keep it going.</span>
         </h1>
