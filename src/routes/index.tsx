@@ -28,7 +28,7 @@ const quick = [
   { to: "/ai", label: "AI Tutor", icon: Sparkles },
 ] as const;
 
-function greeting() {
+function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
