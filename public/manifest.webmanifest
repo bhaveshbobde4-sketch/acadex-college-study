@@ -1,5 +1,5 @@
 {
-  "name": "Acadex — Study Companion",
+  "name": "Acadex — Study Smarter. Learn Faster.",
   "short_name": "Acadex",
   "description": "Notes, PYQs, AI study assistant and productivity tools for engineering students.",
   "start_url": "/",
@@ -9,6 +9,7 @@
   "background_color": "#0b0a1a",
   "theme_color": "#15132a",
   "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],

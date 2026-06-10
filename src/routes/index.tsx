@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import {
   Flame, BookOpen, FileText, Sparkles, Calendar, ChevronRight,
   Timer, Calculator, TrendingUp, GraduationCap,
 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { Logo } from "@/components/Logo";
 import { fetchTrendingNotes } from "@/lib/notes-api";
 import { useDisplayName } from "@/hooks/use-display-name";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,7 +30,7 @@ const quick = [
   { to: "/ai", label: "AI Tutor", icon: Sparkles },
 ] as const;
 
-function greeting() {
+function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
@@ -38,6 +40,8 @@ function greeting() {
 function HomePage() {
   const { firstName } = useDisplayName();
   const { user } = useAuth();
+  const [greeting, setGreeting] = useState<string>("Welcome back");
+  useEffect(() => { setGreeting(getGreeting()); }, []);
   const { data: stats } = useQuery({
     queryKey: ["home-stats", user?.id ?? "anon"],
     enabled: !!user,
@@ -64,7 +68,12 @@ function HomePage() {
       <section className="relative overflow-hidden rounded-3xl p-6 glass gradient-border">
         <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-[var(--brand)] opacity-30 blur-3xl" />
         <div className="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[var(--brand-2)] opacity-25 blur-3xl" />
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{greeting()}</p>
+        <div className="flex items-center justify-between gap-3">
+          <Logo size={36} showTagline />
+        </div>
+        <p className="mt-5 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          {greeting}
+        </p>
         <h1 className="mt-1 text-2xl font-semibold">
           Hey {firstName}, <span className="gradient-text">let's keep it going.</span>
         </h1>

@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Mail, Lock, GraduationCap, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -69,12 +70,8 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col px-6 py-10">
-      <div className="flex items-center gap-2">
-        <div className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center">
-          <GraduationCap className="h-5 w-5" />
-        </div>
-        <span className="text-lg font-semibold">Acadex</span>
-      </div>
+      <Logo size={40} showTagline />
+
 
       <div className="mt-12">
         <h1 className="text-3xl font-semibold leading-tight">
@@ -106,7 +103,7 @@ function LoginPage() {
         <form onSubmit={handleEmail} className="space-y-3">
           {mode === "signup" && (
             <Field
-              icon={GraduationCap}
+              icon={User}
               placeholder="Full name"
               type="text"
               value={name}
