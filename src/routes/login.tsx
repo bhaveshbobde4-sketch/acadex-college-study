@@ -69,12 +69,8 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col px-6 py-10">
-      <div className="flex items-center gap-2">
-        <div className="h-9 w-9 rounded-xl btn-brand flex items-center justify-center">
-          <GraduationCap className="h-5 w-5" />
-        </div>
-        <span className="text-lg font-semibold">Acadex</span>
-      </div>
+      <Logo size={40} showTagline />
+
 
       <div className="mt-12">
         <h1 className="text-3xl font-semibold leading-tight">
