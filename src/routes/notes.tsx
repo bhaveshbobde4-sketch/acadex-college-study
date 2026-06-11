@@ -178,11 +178,16 @@ function SubjectPicker({
   );
 }
 
-function MaterialPicker({ onPick }: { onPick: (v: MaterialType) => void }) {
+function MaterialPicker({ onPick }: { onPick: (v: MaterialChoice) => void }) {
+  const items: { value: MaterialChoice; label: string }[] = [
+    ...MATERIAL_TYPES.map((m) => ({ value: m.value as MaterialChoice, label: m.label })),
+    { value: "videos", label: "YouTube Videos" },
+    { value: "links", label: "Important Links" },
+  ];
   return (
     <Section title="Material type">
       <div className="grid grid-cols-2 gap-3">
-        {MATERIAL_TYPES.map((m) => (
+        {items.map((m) => (
           <PickCard key={m.value} label={m.label} onClick={() => onPick(m.value)} />
         ))}
       </div>
