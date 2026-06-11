@@ -15,6 +15,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExamHubRouteImport } from './routes/exam-hub'
+import { Route as DiagramRouteImport } from './routes/diagram'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -51,6 +52,11 @@ const ExamHubRoute = ExamHubRouteImport.update({
   path: '/exam-hub',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiagramRoute = DiagramRouteImport.update({
+  id: '/diagram',
+  path: '/diagram',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CommunityRoute = CommunityRouteImport.update({
   id: '/community',
   path: '/community',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/ai': typeof AiRoute
   '/community': typeof CommunityRoute
+  '/diagram': typeof DiagramRoute
   '/exam-hub': typeof ExamHubRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRouteWithChildren
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/ai': typeof AiRoute
   '/community': typeof CommunityRoute
+  '/diagram': typeof DiagramRoute
   '/exam-hub': typeof ExamHubRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRouteWithChildren
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/ai': typeof AiRoute
   '/community': typeof CommunityRoute
+  '/diagram': typeof DiagramRoute
   '/exam-hub': typeof ExamHubRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRouteWithChildren
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai'
     | '/community'
+    | '/diagram'
     | '/exam-hub'
     | '/login'
     | '/notes'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai'
     | '/community'
+    | '/diagram'
     | '/exam-hub'
     | '/login'
     | '/notes'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai'
     | '/community'
+    | '/diagram'
     | '/exam-hub'
     | '/login'
     | '/notes'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AiRoute: typeof AiRoute
   CommunityRoute: typeof CommunityRoute
+  DiagramRoute: typeof DiagramRoute
   ExamHubRoute: typeof ExamHubRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRouteWithChildren
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/exam-hub'
       fullPath: '/exam-hub'
       preLoaderRoute: typeof ExamHubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagram': {
+      id: '/diagram'
+      path: '/diagram'
+      fullPath: '/diagram'
+      preLoaderRoute: typeof DiagramRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -269,6 +289,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AiRoute: AiRoute,
   CommunityRoute: CommunityRoute,
+  DiagramRoute: DiagramRoute,
   ExamHubRoute: ExamHubRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRouteWithChildren,
