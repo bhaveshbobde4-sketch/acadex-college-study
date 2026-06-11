@@ -93,6 +93,8 @@ function AdminPage() {
       {tab === "semesters" && <SemesterAdmin />}
       {tab === "subjects" && <SubjectAdmin />}
       {tab === "notes" && <NotesAdmin />}
+      {tab === "videos" && <VideosAdmin />}
+      {tab === "links" && <LinksAdmin />}
       {tab === "exam" && <ExamAdmin />}
     </PageShell>
   );
