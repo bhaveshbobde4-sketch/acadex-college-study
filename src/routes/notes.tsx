@@ -3,12 +3,15 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search, Download, Bookmark, FileText, Loader2, Plus, ChevronRight, ArrowLeft, FolderOpen,
+  PlayCircle, LinkIcon, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import {
   fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note, type NoteFilters,
 } from "@/lib/notes-api";
+import { fetchVideos, youtubeThumb } from "@/lib/videos-api";
+import { fetchLinks } from "@/lib/links-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useBranches, useSemesters, useSubjects } from "@/hooks/use-taxonomy";
@@ -25,6 +28,7 @@ export const Route = createFileRoute("/notes")({
 });
 
 type Step = "branch" | "semester" | "subject" | "material" | "list";
+type MaterialChoice = MaterialType | "videos" | "links";
 
 function NotesPage() {
   const { isAdmin } = useIsAdmin();
@@ -32,7 +36,7 @@ function NotesPage() {
   const [semester, setSemester] = useState<string | null>(null);
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [subjectName, setSubjectName] = useState<string | null>(null);
-  const [material, setMaterial] = useState<MaterialType | null>(null);
+  const [material, setMaterial] = useState<MaterialChoice | null>(null);
   const [search, setSearch] = useState("");
 
   const step: Step = search.trim()
@@ -51,7 +55,11 @@ function NotesPage() {
     if (branch) return setBranch(null);
   };
 
-  const subtitleParts = [branch, semester, subjectName, material && materialLabel(material)].filter(Boolean);
+  const matLabel =
+    material === "videos" ? "Videos" :
+    material === "links" ? "Resources" :
+    material ? materialLabel(material) : null;
+  const subtitleParts = [branch, semester, subjectName, matLabel].filter(Boolean);
   const subtitle = subtitleParts.length ? subtitleParts.join(" · ") : "Library";
 
   return (
@@ -95,13 +103,19 @@ function NotesPage() {
         />
       )}
       {step === "material" && <MaterialPicker onPick={setMaterial} />}
-      {step === "list" && (
+      {step === "list" && material === "videos" && (
+        <VideosList branch={branch ?? undefined} semester={semester ?? undefined} subjectId={subjectId ?? undefined} />
+      )}
+      {step === "list" && material === "links" && (
+        <LinksList branch={branch ?? undefined} semester={semester ?? undefined} subjectId={subjectId ?? undefined} />
+      )}
+      {step === "list" && material !== "videos" && material !== "links" && (
         <NotesList
           filters={{
             branch: branch ?? undefined,
             semester: semester ?? undefined,
             subjectId: subjectId ?? undefined,
-            materialType: material ?? undefined,
+            materialType: (material ?? undefined) as MaterialType | undefined,
             search: search.trim() || undefined,
           }}
           isAdmin={isAdmin}
@@ -164,11 +178,16 @@ function SubjectPicker({
   );
 }
 
-function MaterialPicker({ onPick }: { onPick: (v: MaterialType) => void }) {
+function MaterialPicker({ onPick }: { onPick: (v: MaterialChoice) => void }) {
+  const items: { value: MaterialChoice; label: string }[] = [
+    ...MATERIAL_TYPES.map((m) => ({ value: m.value as MaterialChoice, label: m.label })),
+    { value: "videos", label: "YouTube Videos" },
+    { value: "links", label: "Important Links" },
+  ];
   return (
     <Section title="Material type">
       <div className="grid grid-cols-2 gap-3">
-        {MATERIAL_TYPES.map((m) => (
+        {items.map((m) => (
           <PickCard key={m.value} label={m.label} onClick={() => onPick(m.value)} />
         ))}
       </div>
@@ -310,6 +329,122 @@ function NotesList({
               </article>
             );
           })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ───────── Videos list ───────── */
+
+function VideosList({ branch, semester, subjectId }: { branch?: string; semester?: string; subjectId?: string }) {
+  const { data: videos, isLoading } = useQuery({
+    queryKey: ["videos", branch ?? "", semester ?? "", subjectId ?? ""],
+    queryFn: () => fetchVideos({ branch, semester, subjectId }),
+  });
+
+  const groups = useMemo(() => {
+    const map = new Map<string, typeof videos>();
+    (videos ?? []).forEach((v) => {
+      const k = v.chapter?.trim() || "General";
+      const arr = map.get(k) ?? [];
+      arr.push(v);
+      map.set(k, arr);
+    });
+    return Array.from(map.entries());
+  }, [videos]);
+
+  return (
+    <section className="mt-6">
+      <h2 className="text-sm font-semibold text-muted-foreground mb-2">YouTube Videos</h2>
+      {isLoading ? (
+        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" /></div>
+      ) : !videos?.length ? (
+        <div className="glass rounded-3xl p-8 text-center gradient-border">
+          <div className="text-2xl mb-1">▶️</div>
+          <div className="text-sm font-semibold">No videos yet</div>
+          <p className="text-xs text-muted-foreground mt-1">Check back soon!</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {groups.map(([chapter, vids]) => (
+            <div key={chapter}>
+              <div className="text-xs font-semibold text-muted-foreground mb-2 px-1">{chapter}</div>
+              <div className="space-y-2">
+                {vids!.map((v) => {
+                  const thumb = youtubeThumb(v.youtube_url);
+                  return (
+                    <a
+                      key={v.id}
+                      href={v.youtube_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="glass rounded-2xl p-3 flex items-center gap-3 gradient-border hover:bg-white/[0.08]"
+                    >
+                      <div className="h-16 w-24 rounded-xl bg-gradient-to-br from-red-500/30 to-violet-500/30 overflow-hidden flex items-center justify-center shrink-0">
+                        {thumb ? (
+                          <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
+                        ) : (
+                          <PlayCircle className="h-6 w-6" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate">{v.title}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5 truncate flex items-center gap-1">
+                          <PlayCircle className="h-3 w-3" /> Open in YouTube
+                        </div>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ───────── Links list ───────── */
+
+function LinksList({ branch, semester, subjectId }: { branch?: string; semester?: string; subjectId?: string }) {
+  const { data: links, isLoading } = useQuery({
+    queryKey: ["links", branch ?? "", semester ?? "", subjectId ?? ""],
+    queryFn: () => fetchLinks({ branch, semester, subjectId }),
+  });
+
+  return (
+    <section className="mt-6">
+      <h2 className="text-sm font-semibold text-muted-foreground mb-2">Important Links</h2>
+      {isLoading ? (
+        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" /></div>
+      ) : !links?.length ? (
+        <div className="glass rounded-3xl p-8 text-center gradient-border">
+          <div className="text-2xl mb-1">🔗</div>
+          <div className="text-sm font-semibold">No resources yet</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {links.map((l) => (
+            <a
+              key={l.id}
+              href={l.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass rounded-2xl p-4 flex items-center gap-3 gradient-border hover:bg-white/[0.08]"
+            >
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/30 to-sky-500/30 flex items-center justify-center shrink-0">
+                <LinkIcon className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{l.title}</div>
+                {l.description && <div className="text-[11px] text-muted-foreground truncate">{l.description}</div>}
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+            </a>
+          ))}
         </div>
       )}
     </section>

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, Send, Loader2, Wand2, Calendar, FileText } from "lucide-react";
+import { Sparkles, Send, Loader2, Wand2, Calendar, FileText, Network, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import { askTutor } from "@/lib/ai-tutor.functions";
@@ -62,7 +62,21 @@ function AIPage() {
         </span>
       }
     >
-      <div className="flex gap-2 -mx-4 px-4 overflow-x-auto pb-1">
+      <Link
+        to="/diagram"
+        className="mt-1 glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/[0.08] gradient-border"
+      >
+        <span className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 flex items-center justify-center">
+          <Network className="h-5 w-5" />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-semibold">Diagram & Flowchart Generator</span>
+          <span className="block text-[11px] text-muted-foreground">Mermaid · Flowcharts · Mind maps · ER · Architecture</span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+
+      <div className="mt-3 flex gap-2 -mx-4 px-4 overflow-x-auto pb-1">
         {quickPrompts.map(({ label, icon: Icon, prompt }) => (
           <button
             key={label}
