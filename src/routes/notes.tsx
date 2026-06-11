@@ -3,12 +3,15 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search, Download, Bookmark, FileText, Loader2, Plus, ChevronRight, ArrowLeft, FolderOpen,
+  PlayCircle, LinkIcon, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import {
   fetchNotes, logDownload, noteDisplayUrl, fetchMySavedIds, toggleSave, type Note, type NoteFilters,
 } from "@/lib/notes-api";
+import { fetchVideos, youtubeThumb } from "@/lib/videos-api";
+import { fetchLinks } from "@/lib/links-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useBranches, useSemesters, useSubjects } from "@/hooks/use-taxonomy";
