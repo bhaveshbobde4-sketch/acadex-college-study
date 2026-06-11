@@ -1172,3 +1172,295 @@ function AuditLogPanel() {
     </div>
   );
 }
+
+/* ───────── Videos admin ───────── */
+
+type VideoForm = {
+  id?: string;
+  title: string;
+  chapter: string;
+  youtube_url: string;
+  branch: string;
+  semester: string;
+  subjectId: string;
+  sort_order: string;
+};
+
+const emptyVideo: VideoForm = {
+  title: "", chapter: "", youtube_url: "", branch: "", semester: "", subjectId: "", sort_order: "",
+};
+
+function VideosAdmin() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const { data: branches = [] } = useBranches();
+  const [form, setForm] = useState<VideoForm | null>(null);
+  const { data: semList = [] } = useSemesters(form?.branch || undefined);
+  const { data: subjList = [] } = useSubjects(form?.branch || undefined, form?.semester || undefined);
+
+  const { data: rows, isLoading } = useQuery({
+    queryKey: ["admin-videos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("youtube_videos")
+        .select("id,title,chapter,youtube_url,branch,semester,subject_id,sort_order")
+        .order("branch").order("semester").order("chapter").order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async (f: VideoForm) => {
+      if (!f.title.trim() || !f.youtube_url.trim()) throw new Error("Title and YouTube URL required");
+      if (!f.branch || !f.semester || !f.subjectId) throw new Error("Branch, semester and subject required");
+      const payload = {
+        title: f.title.trim(),
+        chapter: f.chapter.trim() || null,
+        youtube_url: f.youtube_url.trim(),
+        branch: f.branch,
+        semester: f.semester,
+        subject_id: f.subjectId,
+        sort_order: f.sort_order.trim() ? parseInt(f.sort_order, 10) : 0,
+      };
+      if (f.id) {
+        const { error } = await supabase.from("youtube_videos").update(payload).eq("id", f.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("youtube_videos").insert({ ...payload, created_by: user!.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Saved");
+      setForm(null);
+      qc.invalidateQueries({ queryKey: ["admin-videos"] });
+      qc.invalidateQueries({ queryKey: ["videos"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("youtube_videos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Deleted");
+      qc.invalidateQueries({ queryKey: ["admin-videos"] });
+      qc.invalidateQueries({ queryKey: ["videos"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="mt-4 space-y-3">
+      <button onClick={() => setForm(emptyVideo)} className="btn-brand w-full rounded-2xl py-3 text-sm font-medium flex items-center justify-center gap-2">
+        <Plus className="h-4 w-4" /> Add new video
+      </button>
+
+      {form && (
+        <div className="glass rounded-3xl p-4 gradient-border space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{form.id ? "Edit video" : "New video"}</h3>
+            <button onClick={() => setForm(null)} aria-label="Close"><X className="h-4 w-4" /></button>
+          </div>
+          <TextField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
+          <TextField label="Chapter (optional)" value={form.chapter} onChange={(v) => setForm({ ...form, chapter: v })} placeholder="e.g. Chapter 1 – Process Management" />
+          <TextField label="YouTube URL" value={form.youtube_url} onChange={(v) => setForm({ ...form, youtube_url: v })} placeholder="https://youtube.com/watch?v=…" />
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField label="Branch" value={form.branch}
+              options={["", ...branches.map((b) => b.name)]}
+              labels={["Pick…", ...branches.map((b) => b.name)]}
+              onChange={(v) => setForm({ ...form, branch: v, semester: "", subjectId: "" })} />
+            <SelectField label="Semester" value={form.semester}
+              options={["", ...semList.map((s) => s.name)]}
+              labels={["Pick…", ...semList.map((s) => s.name)]}
+              onChange={(v) => setForm({ ...form, semester: v, subjectId: "" })} />
+          </div>
+          <SelectField label="Subject" value={form.subjectId}
+            options={["", ...subjList.map((s) => s.id)]}
+            labels={["Pick…", ...subjList.map((s) => s.name)]}
+            onChange={(v) => setForm({ ...form, subjectId: v })} />
+          <TextField label="Sort order" value={form.sort_order} onChange={(v) => setForm({ ...form, sort_order: v })} placeholder="0" />
+          <button disabled={save.isPending} onClick={() => save.mutate(form)} className="btn-brand w-full rounded-2xl py-3 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60">
+            {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Save
+          </button>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+      ) : !rows?.length ? (
+        <div className="glass rounded-2xl p-6 text-center text-sm text-muted-foreground">No videos yet.</div>
+      ) : (
+        rows.map((r) => (
+          <article key={r.id} className="glass rounded-2xl p-4 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{r.title}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {r.chapter ? `${r.chapter} · ` : ""}{r.branch} · {r.semester}
+              </div>
+            </div>
+            <button
+              onClick={() => setForm({
+                id: r.id, title: r.title, chapter: r.chapter ?? "", youtube_url: r.youtube_url,
+                branch: r.branch, semester: r.semester, subjectId: r.subject_id ?? "",
+                sort_order: String(r.sort_order),
+              })}
+              className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center" aria-label="Edit"
+            ><Pencil className="h-4 w-4" /></button>
+            <button onClick={() => confirm(`Delete video "${r.title}"? This cannot be undone.`) && del.mutate(r.id)} className="h-9 w-9 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center" aria-label="Delete">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </article>
+        ))
+      )}
+    </div>
+  );
+}
+
+/* ───────── Links admin ───────── */
+
+type LinkForm = {
+  id?: string;
+  title: string;
+  url: string;
+  description: string;
+  branch: string;
+  semester: string;
+  subjectId: string;
+  sort_order: string;
+};
+
+const emptyLink: LinkForm = {
+  title: "", url: "", description: "", branch: "", semester: "", subjectId: "", sort_order: "",
+};
+
+function LinksAdmin() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const { data: branches = [] } = useBranches();
+  const [form, setForm] = useState<LinkForm | null>(null);
+  const { data: semList = [] } = useSemesters(form?.branch || undefined);
+  const { data: subjList = [] } = useSubjects(form?.branch || undefined, form?.semester || undefined);
+
+  const { data: rows, isLoading } = useQuery({
+    queryKey: ["admin-links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("important_links")
+        .select("id,title,url,description,branch,semester,subject_id,sort_order")
+        .order("branch").order("semester").order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async (f: LinkForm) => {
+      if (!f.title.trim() || !f.url.trim()) throw new Error("Title and URL required");
+      if (!f.branch || !f.semester || !f.subjectId) throw new Error("Branch, semester and subject required");
+      const payload = {
+        title: f.title.trim(),
+        url: f.url.trim(),
+        description: f.description.trim() || null,
+        branch: f.branch,
+        semester: f.semester,
+        subject_id: f.subjectId,
+        sort_order: f.sort_order.trim() ? parseInt(f.sort_order, 10) : 0,
+      };
+      if (f.id) {
+        const { error } = await supabase.from("important_links").update(payload).eq("id", f.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("important_links").insert({ ...payload, created_by: user!.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Saved");
+      setForm(null);
+      qc.invalidateQueries({ queryKey: ["admin-links"] });
+      qc.invalidateQueries({ queryKey: ["links"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("important_links").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Deleted");
+      qc.invalidateQueries({ queryKey: ["admin-links"] });
+      qc.invalidateQueries({ queryKey: ["links"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="mt-4 space-y-3">
+      <button onClick={() => setForm(emptyLink)} className="btn-brand w-full rounded-2xl py-3 text-sm font-medium flex items-center justify-center gap-2">
+        <Plus className="h-4 w-4" /> Add new link
+      </button>
+
+      {form && (
+        <div className="glass rounded-3xl p-4 gradient-border space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{form.id ? "Edit link" : "New link"}</h3>
+            <button onClick={() => setForm(null)} aria-label="Close"><X className="h-4 w-4" /></button>
+          </div>
+          <TextField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
+          <TextField label="URL" value={form.url} onChange={(v) => setForm({ ...form, url: v })} placeholder="https://…" />
+          <TextArea label="Description (optional)" value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField label="Branch" value={form.branch}
+              options={["", ...branches.map((b) => b.name)]}
+              labels={["Pick…", ...branches.map((b) => b.name)]}
+              onChange={(v) => setForm({ ...form, branch: v, semester: "", subjectId: "" })} />
+            <SelectField label="Semester" value={form.semester}
+              options={["", ...semList.map((s) => s.name)]}
+              labels={["Pick…", ...semList.map((s) => s.name)]}
+              onChange={(v) => setForm({ ...form, semester: v, subjectId: "" })} />
+          </div>
+          <SelectField label="Subject" value={form.subjectId}
+            options={["", ...subjList.map((s) => s.id)]}
+            labels={["Pick…", ...subjList.map((s) => s.name)]}
+            onChange={(v) => setForm({ ...form, subjectId: v })} />
+          <TextField label="Sort order" value={form.sort_order} onChange={(v) => setForm({ ...form, sort_order: v })} placeholder="0" />
+          <button disabled={save.isPending} onClick={() => save.mutate(form)} className="btn-brand w-full rounded-2xl py-3 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60">
+            {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Save
+          </button>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+      ) : !rows?.length ? (
+        <div className="glass rounded-2xl p-6 text-center text-sm text-muted-foreground">No links yet.</div>
+      ) : (
+        rows.map((r) => (
+          <article key={r.id} className="glass rounded-2xl p-4 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{r.title}</div>
+              <div className="text-xs text-muted-foreground truncate">{r.branch} · {r.semester}</div>
+            </div>
+            <button
+              onClick={() => setForm({
+                id: r.id, title: r.title, url: r.url, description: r.description ?? "",
+                branch: r.branch, semester: r.semester, subjectId: r.subject_id ?? "",
+                sort_order: String(r.sort_order),
+              })}
+              className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center" aria-label="Edit"
+            ><Pencil className="h-4 w-4" /></button>
+            <button onClick={() => confirm(`Delete link "${r.title}"? This cannot be undone.`) && del.mutate(r.id)} className="h-9 w-9 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center" aria-label="Delete">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </article>
+        ))
+      )}
+    </div>
+  );
+}
