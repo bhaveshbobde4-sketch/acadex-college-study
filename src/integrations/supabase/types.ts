@@ -104,6 +104,56 @@ export type Database = {
         }
         Relationships: []
       }
+      important_links: {
+        Row: {
+          branch: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          semester: string
+          sort_order: number
+          subject_id: string | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          branch: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          semester: string
+          sort_order?: number
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          semester?: string
+          sort_order?: number
+          subject_id?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "important_links_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_downloads: {
         Row: {
           downloaded_at: string
@@ -413,6 +463,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      youtube_videos: {
+        Row: {
+          branch: string
+          chapter: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          semester: string
+          sort_order: number
+          subject_id: string | null
+          title: string
+          updated_at: string
+          youtube_url: string
+        }
+        Insert: {
+          branch: string
+          chapter?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          semester: string
+          sort_order?: number
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+          youtube_url: string
+        }
+        Update: {
+          branch?: string
+          chapter?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          semester?: string
+          sort_order?: number
+          subject_id?: string | null
+          title?: string
+          updated_at?: string
+          youtube_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_videos_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
