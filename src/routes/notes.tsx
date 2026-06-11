@@ -103,13 +103,19 @@ function NotesPage() {
         />
       )}
       {step === "material" && <MaterialPicker onPick={setMaterial} />}
-      {step === "list" && (
+      {step === "list" && material === "videos" && (
+        <VideosList branch={branch ?? undefined} semester={semester ?? undefined} subjectId={subjectId ?? undefined} />
+      )}
+      {step === "list" && material === "links" && (
+        <LinksList branch={branch ?? undefined} semester={semester ?? undefined} subjectId={subjectId ?? undefined} />
+      )}
+      {step === "list" && material !== "videos" && material !== "links" && (
         <NotesList
           filters={{
             branch: branch ?? undefined,
             semester: semester ?? undefined,
             subjectId: subjectId ?? undefined,
-            materialType: material ?? undefined,
+            materialType: (material ?? undefined) as MaterialType | undefined,
             search: search.trim() || undefined,
           }}
           isAdmin={isAdmin}
