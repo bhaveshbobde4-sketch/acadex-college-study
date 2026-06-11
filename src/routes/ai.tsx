@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, Send, Loader2, Wand2, Calendar, FileText } from "lucide-react";
+import { Sparkles, Send, Loader2, Wand2, Calendar, FileText, Network, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import { askTutor } from "@/lib/ai-tutor.functions";
