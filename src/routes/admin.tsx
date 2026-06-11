@@ -85,6 +85,8 @@ function AdminPage() {
       </div>
 
       {tab === "stats" && <StatsPanel />}
+      {tab === "users" && <UsersAdmin />}
+      {tab === "audit" && <AuditLogPanel />}
       {tab === "branches" && <BranchAdmin />}
       {tab === "semesters" && <SemesterAdmin />}
       {tab === "subjects" && <SubjectAdmin />}
