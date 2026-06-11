@@ -28,6 +28,7 @@ export const Route = createFileRoute("/notes")({
 });
 
 type Step = "branch" | "semester" | "subject" | "material" | "list";
+type MaterialChoice = MaterialType | "videos" | "links";
 
 function NotesPage() {
   const { isAdmin } = useIsAdmin();
@@ -35,7 +36,7 @@ function NotesPage() {
   const [semester, setSemester] = useState<string | null>(null);
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [subjectName, setSubjectName] = useState<string | null>(null);
-  const [material, setMaterial] = useState<MaterialType | null>(null);
+  const [material, setMaterial] = useState<MaterialChoice | null>(null);
   const [search, setSearch] = useState("");
 
   const step: Step = search.trim()
@@ -54,7 +55,11 @@ function NotesPage() {
     if (branch) return setBranch(null);
   };
 
-  const subtitleParts = [branch, semester, subjectName, material && materialLabel(material)].filter(Boolean);
+  const matLabel =
+    material === "videos" ? "Videos" :
+    material === "links" ? "Resources" :
+    material ? materialLabel(material) : null;
+  const subtitleParts = [branch, semester, subjectName, matLabel].filter(Boolean);
   const subtitle = subtitleParts.length ? subtitleParts.join(" · ") : "Library";
 
   return (
