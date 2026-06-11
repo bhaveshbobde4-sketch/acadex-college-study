@@ -29,10 +29,12 @@ const examTypes = [
   { value: "result", label: "Result link" },
 ];
 
-type Tab = "stats" | "branches" | "semesters" | "subjects" | "notes" | "exam";
+type Tab = "stats" | "branches" | "semesters" | "subjects" | "notes" | "exam" | "users" | "audit";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "stats", label: "Overview" },
+  { key: "users", label: "Users" },
+  { key: "audit", label: "Audit Log" },
   { key: "branches", label: "Branches" },
   { key: "semesters", label: "Semesters" },
   { key: "subjects", label: "Subjects" },
