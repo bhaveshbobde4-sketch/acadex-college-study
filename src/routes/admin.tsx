@@ -1,8 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Trash2, Pencil, Plus, X, ShieldCheck } from "lucide-react";
+import { Loader2, Trash2, Pencil, Plus, X, ShieldCheck, Search, UserPlus, UserMinus, History } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { listUsers, grantRole, revokeRole, listAuditLog } from "@/lib/admin-users.functions";
 import { PageShell } from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,10 +29,12 @@ const examTypes = [
   { value: "result", label: "Result link" },
 ];
 
-type Tab = "stats" | "branches" | "semesters" | "subjects" | "notes" | "exam";
+type Tab = "stats" | "branches" | "semesters" | "subjects" | "notes" | "exam" | "users" | "audit";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "stats", label: "Overview" },
+  { key: "users", label: "Users" },
+  { key: "audit", label: "Audit Log" },
   { key: "branches", label: "Branches" },
   { key: "semesters", label: "Semesters" },
   { key: "subjects", label: "Subjects" },
@@ -77,6 +85,8 @@ function AdminPage() {
       </div>
 
       {tab === "stats" && <StatsPanel />}
+      {tab === "users" && <UsersAdmin />}
+      {tab === "audit" && <AuditLogPanel />}
       {tab === "branches" && <BranchAdmin />}
       {tab === "semesters" && <SemesterAdmin />}
       {tab === "subjects" && <SubjectAdmin />}
@@ -955,5 +965,206 @@ function SelectField({
         ))}
       </select>
     </label>
+  );
+}
+
+/* ───────── Users / role management ───────── */
+
+function UsersAdmin() {
+  const qc = useQueryClient();
+  const { user: currentUser } = useAuth();
+  const fetchUsers = useServerFn(listUsers);
+  const grantFn = useServerFn(grantRole);
+  const revokeFn = useServerFn(revokeRole);
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "admin" | "student">("all");
+  const [confirm, setConfirm] = useState<
+    | { action: "grant" | "revoke"; userId: string; email: string; role: "admin" }
+    | null
+  >(null);
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => fetchUsers(),
+  });
+
+  const mutate = useMutation({
+    mutationFn: async (c: NonNullable<typeof confirm>) => {
+      if (c.action === "grant") await grantFn({ data: { userId: c.userId, role: c.role } });
+      else await revokeFn({ data: { userId: c.userId, role: c.role } });
+    },
+    onSuccess: (_d, c) => {
+      toast.success(c.action === "grant" ? "Admin access granted" : "Admin access removed");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-audit"] });
+      qc.invalidateQueries({ queryKey: ["is-admin"] });
+      setConfirm(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return users.filter((u) => {
+      const isAdmin = u.roles.includes("admin");
+      if (filter === "admin" && !isAdmin) return false;
+      if (filter === "student" && isAdmin) return false;
+      if (!q) return true;
+      return (
+        (u.email ?? "").toLowerCase().includes(q) ||
+        (u.full_name ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [users, search, filter]);
+
+  const adminCount = users.filter((u) => u.roles.includes("admin")).length;
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="glass rounded-2xl p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email"
+            className="flex-1 bg-transparent text-sm outline-none"
+          />
+        </div>
+        <div className="flex gap-1">
+          {(["all", "admin", "student"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`rounded-xl px-3 py-1.5 text-[11px] font-medium capitalize ${
+                filter === f ? "btn-brand" : "text-muted-foreground glass"
+              }`}
+            >
+              {f} {f === "admin" ? `(${adminCount})` : f === "all" ? `(${users.length})` : ""}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" /></div>
+      ) : filtered.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-8">No users found.</p>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((u) => {
+            const isAdmin = u.roles.includes("admin");
+            const isMe = currentUser?.id === u.id;
+            return (
+              <div key={u.id} className="glass rounded-2xl p-3 gradient-border">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">
+                      {u.full_name || "Unnamed"}
+                      {isMe && <span className="ml-2 text-[10px] text-muted-foreground">(you)</span>}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      Joined {new Date(u.created_at).toLocaleDateString()}
+                      {u.last_sign_in_at && ` · Last seen ${new Date(u.last_sign_in_at).toLocaleDateString()}`}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      isAdmin ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {isAdmin ? "Admin" : "Student"}
+                    </span>
+                    {isAdmin ? (
+                      <button
+                        disabled={isMe}
+                        onClick={() => setConfirm({ action: "revoke", userId: u.id, email: u.email ?? "", role: "admin" })}
+                        className="flex items-center gap-1 text-[11px] text-destructive disabled:opacity-40"
+                      >
+                        <UserMinus className="h-3 w-3" /> Remove admin
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setConfirm({ action: "grant", userId: u.id, email: u.email ?? "", role: "admin" })}
+                        className="flex items-center gap-1 text-[11px] text-primary"
+                      >
+                        <UserPlus className="h-3 w-3" /> Make admin
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.action === "grant" ? "Grant admin access?" : "Remove admin access?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.action === "grant"
+                ? `${confirm?.email} will get full admin permissions, including managing branches, subjects, PDFs, and other users.`
+                : `${confirm?.email} will lose admin access and become a regular student.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirm && mutate.mutate(confirm)}
+              disabled={mutate.isPending}
+            >
+              {mutate.isPending ? "Saving…" : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+/* ───────── Audit log ───────── */
+
+function AuditLogPanel() {
+  const fetchAudit = useServerFn(listAuditLog);
+  const { data: entries = [], isLoading } = useQuery({
+    queryKey: ["admin-audit"],
+    queryFn: () => fetchAudit(),
+  });
+
+  if (isLoading)
+    return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+
+  if (entries.length === 0)
+    return <p className="text-center text-sm text-muted-foreground py-10">No activity yet.</p>;
+
+  return (
+    <div className="mt-4 space-y-2">
+      {entries.map((e) => (
+        <div key={e.id} className="glass rounded-2xl p-3 gradient-border">
+          <div className="flex items-center gap-2 text-xs">
+            <History className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              e.action === "grant" ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"
+            }`}>
+              {e.action === "grant" ? "Granted" : "Revoked"}
+            </span>
+            <span className="text-muted-foreground">{e.role}</span>
+          </div>
+          <div className="mt-1.5 text-xs">
+            <span className="font-medium">{e.actor_email ?? "system"}</span>
+            <span className="text-muted-foreground"> {e.action === "grant" ? "→" : "✕"} </span>
+            <span className="font-medium">{e.target_email ?? "(unknown)"}</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1">
+            {new Date(e.created_at).toLocaleString()}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
