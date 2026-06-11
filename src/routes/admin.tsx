@@ -29,7 +29,7 @@ const examTypes = [
   { value: "result", label: "Result link" },
 ];
 
-type Tab = "stats" | "branches" | "semesters" | "subjects" | "notes" | "exam" | "users" | "audit";
+type Tab = "stats" | "branches" | "semesters" | "subjects" | "notes" | "videos" | "links" | "exam" | "users" | "audit";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "stats", label: "Overview" },
@@ -39,6 +39,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "semesters", label: "Semesters" },
   { key: "subjects", label: "Subjects" },
   { key: "notes", label: "PDFs" },
+  { key: "videos", label: "Videos" },
+  { key: "links", label: "Links" },
   { key: "exam", label: "Exam Hub" },
 ];
 
