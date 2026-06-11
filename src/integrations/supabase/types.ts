@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           created_at: string
@@ -398,7 +428,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "super_admin" | "moderator"
       exam_event_type: "timetable" | "notice" | "important_date" | "result"
       material_type:
         | "notes"
@@ -535,7 +565,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "super_admin", "moderator"],
       exam_event_type: ["timetable", "notice", "important_date", "result"],
       material_type: [
         "notes",
