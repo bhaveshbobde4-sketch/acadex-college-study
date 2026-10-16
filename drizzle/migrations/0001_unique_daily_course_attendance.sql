@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX attendance_records_one_mark_per_course_day ON public.attendance_records (user_id, course_id, class_date);
