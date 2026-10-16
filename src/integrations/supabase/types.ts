@@ -44,6 +44,41 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_records: {
+        Row: {
+          class_date: string
+          course_id: string
+          created_at: string
+          id: string
+          present: boolean
+          user_id: string
+        }
+        Insert: {
+          class_date?: string
+          course_id: string
+          created_at?: string
+          id?: string
+          present: boolean
+          user_id: string
+        }
+        Update: {
+          class_date?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          present?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_course_owner_fkey"
+            columns: ["course_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "student_courses"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           created_at: string
@@ -413,6 +448,36 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number
+        }
+        Relationships: []
+      }
+      student_courses: {
+        Row: {
+          course_name: string
+          created_at: string
+          credits: number
+          grade_point: number
+          id: string
+          semester: string
+          user_id: string
+        }
+        Insert: {
+          course_name: string
+          created_at?: string
+          credits: number
+          grade_point: number
+          id?: string
+          semester: string
+          user_id: string
+        }
+        Update: {
+          course_name?: string
+          created_at?: string
+          credits?: number
+          grade_point?: number
+          id?: string
+          semester?: string
+          user_id?: string
         }
         Relationships: []
       }
