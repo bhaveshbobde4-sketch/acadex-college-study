@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as PyqRouteImport } from './routes/pyq'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
@@ -21,6 +22,11 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NotesIdRouteImport } from './routes/notes.$id'
 
+const ToolsRoute = ToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PyqRoute = PyqRouteImport.update({
   id: '/pyq',
   path: '/pyq',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof NotesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/pyq': typeof PyqRoute
+  '/tools': typeof ToolsRoute
   '/notes/$id': typeof NotesIdRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/notes': typeof NotesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/pyq': typeof PyqRoute
+  '/tools': typeof ToolsRoute
   '/notes/$id': typeof NotesIdRoute
 }
 export interface FileRoutesById {
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/notes': typeof NotesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/pyq': typeof PyqRoute
+  '/tools': typeof ToolsRoute
   '/notes/$id': typeof NotesIdRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/profile'
     | '/pyq'
+    | '/tools'
     | '/notes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/profile'
     | '/pyq'
+    | '/tools'
     | '/notes/$id'
   id:
     | '__root__'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/profile'
     | '/pyq'
+    | '/tools'
     | '/notes/$id'
   fileRoutesById: FileRoutesById
 }
@@ -170,10 +182,18 @@ export interface RootRouteChildren {
   NotesRoute: typeof NotesRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   PyqRoute: typeof PyqRoute
+  ToolsRoute: typeof ToolsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tools': {
+      id: '/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pyq': {
       id: '/pyq'
       path: '/pyq'
@@ -275,6 +295,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotesRoute: NotesRouteWithChildren,
   ProfileRoute: ProfileRoute,
   PyqRoute: PyqRoute,
+  ToolsRoute: ToolsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
